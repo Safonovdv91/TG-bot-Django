@@ -1,0 +1,139 @@
+[project]
+name = "tg-bot-django"
+version = "0.1.0"
+description = "simple django site with managed tg-bot"
+requires-python = ">=3.13"
+dependencies = [
+    "aiohttp>=3.11.18",
+    "celery>=5.4.0",
+    "channels-redis>=4.2.1",
+    "channels[daphne]>=4.2.0",
+    "django>=5.1.5",
+    "django-allauth[socialaccount]>=65.5.0",
+    "django-celery-beat>=2.7.0",
+    "django-celery-results>=2.5.1",
+    "django-debug-toolbar>=5.0.1",
+    "django-htmx>=1.23.0",
+    "django-redis>=5.4.0",
+    "gunicorn>=23.0.0",
+    "psycopg2-binary>=2.9.10",
+    "redis>=5.2.1",
+    "shortuuid>=1.0.13",
+    "python-dotenv>=1.1.0",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "django-debug-toolbar>=5.0.1",
+    "pytest>=8.3.4",
+    "pytest-django>=4.9.0",
+    "ruff>=0.9.4",
+]
+
+[tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".gitlab",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "alembic",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "docker",
+    "env",
+    "etc",
+    "requirements",
+    "venv"
+]
+
+[tool.ruff.format]
+# Аналогично black, двойные кавычки
+quote-style = "double"
+
+# Аналогично black, пробелы вместо табов
+indent-style = "space"
+
+# Аналогично black, уважаем trailing commas
+skip-magic-trailing-comma = false
+
+# Аналогично black, автоматически определяем подходящее окончание строки.
+line-ending = "auto"
+# Правила, которые следует добавить к указанным в "ignore=[]" конфига или "--ignore" команды
+[tool.ruff.lint]
+extend-ignore = [
+    # Могут быть излишними в нашей ситуации
+    "D1",       # https://docs.astral.sh/ruff/rules/#pydocstyle-d
+    "D205",     # https://docs.astral.sh/ruff/rules/blank-line-after-summary
+    "D415",     # https://docs.astral.sh/ruff/rules/ends-in-punctuation
+
+    "PLR2004",  # https://docs.astral.sh/ruff/rules/magic-value-comparison – много ложных срабатываний
+    "PLR0904",  # https://docs.astral.sh/ruff/rules/too-many-public-methods – неактуально для нашего аксессорного подхода
+    "PLR0917",  # https://docs.astral.sh/ruff/rules/too-many-positional – может оказатся слишком жесткис
+    "PLR6201",  # https://docs.astral.sh/ruff/rules/literal-membership – не всегда имеет смысл использовать set
+    "PLR6301",  # https://docs.astral.sh/ruff/rules/no-self-use – неактуально для нашего аксессорного подхода
+    "PLW1514",  # https://docs.astral.sh/ruff/rules/unspecified-encoding – неактуально для наших проектов
+    "PLW1641",  # https://docs.astral.sh/ruff/rules/eq-without-hash – иногда нужен eq без hash
+    "PLR0913",  # https://docs.astral.sh/ruff/rules/too-many-arguments – может оказаться слишком жестко для ребят
+    "PLR1714",  # https://docs.astral.sh/ruff/rules/repeated-equality-comparison – бывают неадекватные срабатывания
+    "PERF203",  # https://docs.astral.sh/ruff/rules/try-except-in-loop – я бы включил, но сами таким грешим, не думаю, что крит
+
+    # нигде не придерживались такого подхода
+    "PT007",    # https://docs.astral.sh/ruff/rules/pytest-parametrize-values-wrong-type – не считаю критичным
+
+    # выключил, чтобы продвигать русский язык
+    "RUF001",   # https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-string
+    "RUF002",   # https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-docstring
+    "RUF003",   # https://docs.astral.sh/ruff/rules/ambiguous-unicode-character-comment
+
+    # не считаю критичным
+    "RUF012",   # https://docs.astral.sh/ruff/rules/mutable-class-default
+    "RUF021",   # https://docs.astral.sh/ruff/rules/parenthesize-chained-operators
+
+
+    "SIM105",   # https://docs.astral.sh/ruff/rules/suppressible-exception – я бы включил, но мало кто знает про это и пользуется
+    "SIM108",   # https://docs.astral.sh/ruff/rules/if-else-block-instead-of-if-exp – много ложных срабатываний
+    "SIM117",   # https://docs.astral.sh/ruff/rules/multiple-with-statements – часто становится хуже
+
+    # не считаю критичным
+    "UP012",    # https://docs.astral.sh/ruff/rules/unnecessary-encode-utf8
+    "UP015",    # https://docs.astral.sh/ruff/rules/redundant-open-modes
+
+    "F403",     # Для использования импорта * ( для settigns.py)
+    "E402",     # Отключил, чтобы работала daphne asgi in Django
+
+    # [!] При использовании Ruff в качестве форматтера, рекомендуется избегать следующих правил:
+    # (https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules)
+    "W191",
+    "E111",
+    "E114",
+    "E117",
+    "D206",
+    "D300",
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "COM812",
+    "COM819",
+    "ISC001",
+    "ISC002",
+]
+
+[tool.uv.workspace]
+members = ["django-app"]
