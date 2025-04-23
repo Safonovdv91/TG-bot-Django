@@ -1,0 +1,74 @@
+{% extends "system/layout.html" %}
+{% load socialaccount %}
+
+{% block content %}
+<div class="card mb-3 border-0 nth-shadow">
+    <div class="card-body">
+        <h4 class="card-title nth-card-title mb-4">Управление социальными аккаунтами</h4>
+
+        {% if form.accounts %}
+        <div class="mb-4">
+            <p>Ваш профиль связан со следующими социальными аккаунтами:</p>
+            
+            <form method="post" action="{% url 'socialaccount_connections' %}">
+                {% csrf_token %}
+                
+                <div class="list-group mb-3">
+                    {% for base_account in form.accounts %}
+                    {% with account=base_account.get_provider_account %}
+                    <div class="list-group-item d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center">
+                                <input id="id_account_{{ base_account.id }}" type="radio" name="account" value="{{ base_account.id }}" class="me-3"/>
+                                <div>
+                                    <span class="socialaccount_provider {{ base_account.provider }} {{ account.get_brand.id }} text-capitalize">
+                                        {{ account.get_brand.name }}
+                                    </span>
+                                    <div class="text-muted small">
+                                        {% if base_account.provider == 'telegram' %}
+                                            ID: {{ base_account.extra_data.username|default:base_account.uid }}
+                                        {% else %}
+                                            {{ account.extra_data.email|default:base_account.uid }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <button type="submit" name="action_remove" class="btn btn-sm btn-outline-danger">Отвязать</button>
+                        </div>
+                    </div>
+                    {% endwith %}
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+        {% else %}
+        <div class="alert alert-info mb-4">
+            <p>У вас нет привязанных социальных аккаунтов.</p>
+        </div>
+        {% endif %}
+
+        {% include "socialaccount/snippets/login_extra.html" %}
+    </div>
+</div>
+
+
+<div class="card mb-3 border-0 nth-shadow">
+   <div class="card-body">
+      <div class="mt-4 border-top pt-3">
+         <h5>Привязать социальный аккаунт</h5>
+         <div class="d-flex flex-wrap gap-2 mt-2">
+            {% get_providers as socialaccount_providers %}
+            {% for provider in socialaccount_providers %}
+               <a href="{% provider_login_url provider.id process='connect' %}"
+                  class="btn btn-outline-primary text-capitalize">
+                  <i class="fab fa-{{ provider.id }} me-2"></i>
+                  {{ provider.name }}
+               </a>
+            {% endfor %}
+         </div>
+      </div>
+   </div>
+</div>
+{% endblock %}
