@@ -4,10 +4,14 @@
 
 {% block main_content %}
 <div class="container content">
-<h1>Главная страница управления подпиской</h1>
-    {% for letter in letters %}
-    <div class="col-md-8 col-lg-2">{{ letter }}</div>
-    {% endfor %}
+   
+    <h1>{{ article_title }}</h1>
+    <p>
+    {{ text }}
+    </p>
+    <hr class="border border-secondary border-3 opacity-75">
+    <p class="text te"><strong>Для использования сервиса вам необходимо <mark>авторизоваться</mark> через telegram.</strong></p>
+    <hr class="border border-secondary border-3 opacity-75">
 
 </div>
 {% endblock %}

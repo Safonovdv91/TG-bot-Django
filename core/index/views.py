@@ -4,9 +4,15 @@ from django.contrib.auth.decorators import login_required
 
 
 # Create your views here.
-@login_required(login_url="login")
+# @login_required(login_url="/accounts/login")
 def index(request: HttpRequest):
+    article_text = """
+    Этот сервис создан в помощь мотоспортсменам увлекающимся фигурным управление мотоциклом.
+    Вместо того чтобы носиться как оголтелы по городу - лучше оттачивать свои навыки на площадке
+    И этот бот покажет вам, а именно будет присылать вам каждй раз когда вас обгоняют уведомления.
+    """
     context = {
-        "letters": ["A", "B", "C1", "C2", "C3", "D1", "D2", "D3", "D4", "N"],
+        "article_title": "Gymkhana bot - здесь будет заголовок",
+        "text": article_text,
     }
     return render(request, "index/index.html", context=context)
