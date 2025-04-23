@@ -1,10 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "index/layout.html" %}
 
-</body>
-</html>
+{% block title %}Главноая страница{% endblock %}
+
+{% block main_content %}
+<div class="container content">
+<h1>Главная страница управления подпиской</h1>
+    {% for letter in letters %}
+    <div class="col-md-8 col-lg-2">{{ letter }}</div>
+    {% endfor %}
+
+</div>
+{% endblock %}
+
