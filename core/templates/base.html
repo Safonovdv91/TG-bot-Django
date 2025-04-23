@@ -20,11 +20,10 @@
 
 </head>
 
+{% include "index/components/navbar.html" %}
+
 <body class="h-100 text-center" {% block hx-headers %}{% endblock %}>
     <main>
-    <header>
-    {% include "index/header.html" %}
-    </header>
     <div class="container content">
                 {% block main_content %}
                 {% endblock %}
