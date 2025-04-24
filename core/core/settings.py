@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.telegram",
     "users",
     "index",
+    "gymkhanagp",
 ]
 
 AUTHENTICATION_BACKENDS = [
