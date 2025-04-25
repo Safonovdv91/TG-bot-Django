@@ -1,0 +1,73 @@
+{% extends "gymkhanagp/layout.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% load static %}
+{% load subscription_filters %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Управление подписками</h2>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+            <h5>Типы соревнований</h5>
+        </div>
+        <div class="card-body">
+          <div class="list-group">
+            {% for comp_type in competition_types %}
+              <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span>{{ comp_type.name }}</span>
+                  <span class="badge bg-{{ comp_type|is_subscribed:user_subscriptions|yesno:'success,secondary' }}">
+                    {{ comp_type|is_subscribed:user_subscriptions|yesno:"Подписан,Не подписан" }}
+                  </span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+          <h5>Классы спортсменов</h5>
+      </div>
+      <div class="card-body">
+        <div class="list-group">
+          {% for sport_class in sportsman_classes %}
+            <div class="list-group-item">
+              <div class="form-check form-switch">
+                <input
+                    class="form-check-input subscription-toggle"
+                    type="checkbox"
+                    id="class-{{ sport_class.id }}"
+                    data-competition-type="all"
+                    data-sportsman-class="{{ sport_class.id }}"
+                    {% if sport_class|is_subscribed:user_subscriptions %}checked{% endif %}
+                    hx-post="{% url 'gymkhanagp:toggle_subscription' %}"
+                    hx-trigger="change"
+                    hx-target="#subscription-status"
+                    hx-swap="none"
+                >
+                <label class="form-check-label" for="class-{{ sport_class.id }}">
+                    {{ sport_class.name }} ({{ sport_class.description }})
+                </label>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="subscription-status"></div>
+</div>
+
+
+{% endblock %}
