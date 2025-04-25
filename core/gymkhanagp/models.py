@@ -39,9 +39,7 @@ class UserSubscription(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name="Дата подписки"
     )  # Когда подписался
-    is_active = models.BooleanField(
-        default=True, verbose_name="Активна ли подписка"
-    )  # Можно отключать
+    is_active = models.BooleanField(default=True, verbose_name="Активна ли подписка")
     source = models.CharField(
         max_length=10,
         choices=(("telegram", "Telegram"), ("site", "Сайт"), ("admin", "Админ панель")),
