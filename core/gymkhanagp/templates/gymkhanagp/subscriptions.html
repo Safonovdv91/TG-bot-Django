@@ -42,18 +42,11 @@
           {% for sport_class in sportsman_classes %}
             <div class="list-group-item">
               <div class="form-check form-switch">
-                <input
-                    class="form-check-input subscription-toggle"
-                    type="checkbox"
-                    id="class-{{ sport_class.id }}"
-                    data-competition-type="all"
-                    data-sportsman-class="{{ sport_class.id }}"
-                    {% if sport_class|is_subscribed:user_subscriptions %}checked{% endif %}
-                    hx-post="{% url 'gymkhanagp:toggle_subscription' %}"
-                    hx-trigger="change"
-                    hx-target="#subscription-status"
-                    hx-swap="none"
-                >
+
+                <input type="checkbox" class="btn-check" id="btn-check-outlined" autocomplete="off">
+                
+                {% include "gymkhanagp/components/class_input.html" %}
+
                 <label class="form-check-label" for="class-{{ sport_class.id }}">
                     {{ sport_class.name }} ({{ sport_class.description }})
                 </label>
@@ -69,5 +62,5 @@
   <div id="subscription-status"></div>
 </div>
 
-
 {% endblock %}
+

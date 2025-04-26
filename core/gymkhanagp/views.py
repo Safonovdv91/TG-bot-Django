@@ -48,6 +48,23 @@ def delete_subscription(request, pk):
     return redirect("gymkhanagp:index")
 
 
+@require_POST
+@login_required
+def add_subscription(request, pk):
+    subscription = Subscription.objects.create(
+        user_subscription__user=request.user,
+        competition_type__pk=1,
+        sportsman_class__pk=pk
+        )
+    print(subscription)
+    subscription = get_object_or_404(
+        Subscription, pk=pk, user_subscription__user=request.user
+    )
+    subscription.a()
+    return redirect("gymkhanagp:index")
+
+
+
 @login_required
 def subscriptions_view(request):
     competition_types = CompetitionTypeModel.objects.all()
@@ -70,27 +87,34 @@ def subscriptions_view(request):
     )
 
 
-@require_POST
 @login_required
 def toggle_subscription(request):
-    competition_type_id = request.POST.get("competition_type_id")
-    sportsman_class_id = request.POST.get("sportsman_class_id")
-    user_subscription = UserSubscription.objects.get(user=request.user)
+    try:
 
-    subscription, created = Subscription.objects.get_or_create(
-        user_subscription=user_subscription,
-        competition_type_id=competition_type_id,
-        sportsman_class_id=sportsman_class_id,
-        defaults={"created_at": timezone.now()},
-    )
+        competition_type_id = request.GET.get("competition_type")
+        sportsman_class_id = request.GET.get("sportsman_class")
+        
+        if not competition_type_id or not sportsman_class_id:
+            return JsonResponse({"error": "Missing parameters"}, status=400)
+            
+        user_subscription = UserSubscription.objects.get(user=request.user)
+        
+        subscription, created = Subscription.objects.get_or_create(
+            user_subscription=user_subscription,
+            competition_type_id=competition_type_id,
+            sportsman_class_id=sportsman_class_id,
+        )
 
-    if not created:
-        subscription.delete()
+        if not created:
+            subscription.delete()
 
-    return JsonResponse(
-        {
+        return JsonResponse({
             "is_subscribed": created,
             "competition_type_id": competition_type_id,
             "sportsman_class_id": sportsman_class_id,
-        }
-    )
+        })
+        
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    
