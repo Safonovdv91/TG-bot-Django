@@ -1,8 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, JsonResponse
-from django.shortcuts import render, get_object_or_404, redirect
-from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.shortcuts import render
 
 from .models import (
     Subscription,
@@ -38,33 +36,6 @@ def index(request: HttpRequest):
     return render(request, "gymkhanagp/index.html", context=context)
 
 
-@require_POST
-@login_required
-def delete_subscription(request, pk):
-    subscription = get_object_or_404(
-        Subscription, pk=pk, user_subscription__user=request.user
-    )
-    subscription.delete()
-    return redirect("gymkhanagp:index")
-
-
-@require_POST
-@login_required
-def add_subscription(request, pk):
-    subscription = Subscription.objects.create(
-        user_subscription__user=request.user,
-        competition_type__pk=1,
-        sportsman_class__pk=pk
-        )
-    print(subscription)
-    subscription = get_object_or_404(
-        Subscription, pk=pk, user_subscription__user=request.user
-    )
-    subscription.a()
-    return redirect("gymkhanagp:index")
-
-
-
 @login_required
 def subscriptions_view(request):
     competition_types = CompetitionTypeModel.objects.all()
@@ -90,15 +61,14 @@ def subscriptions_view(request):
 @login_required
 def toggle_subscription(request):
     try:
-
         competition_type_id = request.GET.get("competition_type")
         sportsman_class_id = request.GET.get("sportsman_class")
-        
+
         if not competition_type_id or not sportsman_class_id:
             return JsonResponse({"error": "Missing parameters"}, status=400)
-            
+
         user_subscription = UserSubscription.objects.get(user=request.user)
-        
+
         subscription, created = Subscription.objects.get_or_create(
             user_subscription=user_subscription,
             competition_type_id=competition_type_id,
@@ -108,13 +78,13 @@ def toggle_subscription(request):
         if not created:
             subscription.delete()
 
-        return JsonResponse({
-            "is_subscribed": created,
-            "competition_type_id": competition_type_id,
-            "sportsman_class_id": sportsman_class_id,
-        })
-        
+        return JsonResponse(
+            {
+                "is_subscribed": created,
+                "competition_type_id": competition_type_id,
+                "sportsman_class_id": sportsman_class_id,
+            }
+        )
+
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
-
-    

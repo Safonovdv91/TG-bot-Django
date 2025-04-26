@@ -1,7 +1,9 @@
 {% load subscription_filters %}
 
 <input 
+    class ="form-check-input"
     type="checkbox"
     hx-post="{% url 'gymkhanagp:toggle_subscription' %}?competition_type=1&sportsman_class={{ sport_class.id }}"
     hx-trigger="change"
+    {% if sport_class|is_subscribed_class:user_subscriptions %}checked{% endif %}
 >

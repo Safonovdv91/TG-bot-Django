@@ -42,13 +42,9 @@
           {% for sport_class in sportsman_classes %}
             <div class="list-group-item">
               <div class="form-check form-switch">
-
-                <input type="checkbox" class="btn-check" id="btn-check-outlined" autocomplete="off">
-                
                 {% include "gymkhanagp/components/class_input.html" %}
-
                 <label class="form-check-label" for="class-{{ sport_class.id }}">
-                    {{ sport_class.name }} ({{ sport_class.description }})
+                    {{ sport_class.name }} | ({{ sport_class.description }})
                 </label>
               </div>
             </div>
