@@ -1,4 +1,12 @@
 {% extends "base.html" %}
+{% block custom_js %}
+<script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+{% endblock %}
+
+{% block hx-headers %}
+hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+{% endblock%}
+
 {% block main_content %}
   <div class="row">
     <div class="col-12 col-md-12">
@@ -8,3 +16,4 @@
     </div>
   </div>
 {% endblock %}
+
