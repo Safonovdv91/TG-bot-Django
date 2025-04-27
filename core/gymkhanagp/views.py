@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 
 from .models import (
     Subscription,
@@ -10,7 +10,6 @@ from .models import (
 )
 
 
-# Create your views here.
 @login_required(login_url="/accounts/login")
 def index(request: HttpRequest):
     page_title = "Настройки подписки соревнования Gymkhana GP"
@@ -56,6 +55,41 @@ def subscriptions_view(request):
             "user_subscriptions": user_subscriptions,
         },
     )
+
+
+@login_required
+def subscribe_class(request):
+    """Добавление подписки"""
+    competition_type_id = 1  # Фиксированный тип, как в вашем примере
+    sportsman_class_id = request.GET.get("sportsman_class")
+    
+    subscription, created = Subscription.objects.get_or_create(
+        user_subscription=request.user.user_subscription,
+        competition_type_id=competition_type_id,
+        sportsman_class_id=sportsman_class_id
+    )
+    
+    return render(request, "gymkhanagp/components/class_input_on.html", {
+        "sportsman_class": get_object_or_404(SportsmanClassModel, pk=sportsman_class_id)
+    })
+
+@login_required
+def unsubscribe_class(request):
+    """Удаление подписки"""
+    competition_type_id = 1  # Фиксированный тип
+    sportsman_class_id = request.GET.get("sportsman_class")
+    
+    subscription = get_object_or_404(
+        Subscription,
+        user_subscription__user=request.user,
+        competition_type_id=competition_type_id,
+        sportsman_class_id=sportsman_class_id
+    )
+    subscription.delete()
+    
+    return render(request, "gymkhanagp/components/class_input_off.html", {
+        "sportsman_class": get_object_or_404(SportsmanClassModel, pk=sportsman_class_id)
+    })
 
 
 @login_required

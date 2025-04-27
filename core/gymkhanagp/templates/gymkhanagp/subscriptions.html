@@ -42,10 +42,13 @@
           {% for sport_class in sportsman_classes %}
             <div class="list-group-item">
               <div class="form-check form-switch">
-                {% include "gymkhanagp/components/class_input.html" %}
+                {% include "gymkhanagp/components/class_input_off.html" %}
                 <label class="form-check-label" for="class-{{ sport_class.id }}">
                     {{ sport_class.name }} | ({{ sport_class.description }})
                 </label>
+                <div class="spinner-{{ comp_type.id }}-{{ sport_class.id }} htmx-indicator">
+                  <div class="spinner-border spinner-border-sm"></div>
+              </div>
               </div>
             </div>
           {% endfor %}
