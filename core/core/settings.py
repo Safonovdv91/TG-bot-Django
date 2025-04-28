@@ -149,5 +149,5 @@ ACCOUNT_DEFAULT_HTTP_PROTOCOL = (
     "https"  # Указываем allauth использовать HTTPS для redirect_uri
 )
 
-
 TELEGRAM_BOT_TOKEN = os.environ.get("OAUTH_TELEGRAM_SECRET")
+os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"  # Временно для разработки

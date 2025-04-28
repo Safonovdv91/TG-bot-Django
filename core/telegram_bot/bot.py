@@ -1,75 +1,63 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler
-from django.conf import settings
-from django.contrib.auth.models import User
 import logging
-
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from django.conf import settings
+from allauth.account.models import EmailAddress
+from django.contrib.auth import get_user_model
 from .models import TelegramUser
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
+User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
-def start(update, context):
+async def create_allauth_user(telegram_user):
+    """Асинхронно создает пользователя в django-allauth"""
+    email = f"tg_{telegram_user.id}@example.com"
+    user = User.objects.create_user(
+        username=f"tg_{telegram_user.id}",
+        email=email,
+        first_name=telegram_user.first_name or "",
+        last_name=telegram_user.last_name or "",
+    )
+
+    EmailAddress.objects.create(user=user, email=email, verified=True, primary=True)
+
+    TelegramUser.objects.get_or_create(
+        user=user,
+        telegram_id=telegram_user.id,
+        defaults={"username": telegram_user.username},
+    )
+    return user
+
+
+async def start(update: Update, context):
     """Обработчик команды /start"""
-    telegram_user = update.effective_user
-    user, created = get_or_create_django_user(telegram_user)
-
-    if created:
-        update.message.reply_text(
-            f"Вы успешно добавлены в систему как {user.username}!"
-        )
-    else:
-        update.message.reply_text(f"Привет, @{telegram_user.username}!")
+    await handle_message(update, context)
 
 
-def handle_message(update, context):
-    """Обработчик всех сообщений"""
-    telegram_user = update.effective_user
-    user, created = get_or_create_django_user(telegram_user)
+async def handle_message(update: Update, context):
+    """Асинхронный обработчик сообщений"""
+    tg_user = update.effective_user
 
-    if created:
-        update.message.reply_text(f"Добро пожаловать, {user.first_name}!")
-    else:
-        update.message.reply_text(f"Вы уже в системе, @{telegram_user.username}!")
-
-
-def get_or_create_django_user(telegram_user):
-    """Создает или получает пользователя Django"""
     try:
-        tg_user = TelegramUser.objects.get(telegram_id=telegram_user.id)
-        return tg_user.user, False
+        telegram_user = await TelegramUser.objects.aget(telegram_id=tg_user.id)
+        await update.message.reply_text(
+            f"Hello @{tg_user.username or tg_user.telegram_id}!"
+        )
     except TelegramUser.DoesNotExist:
-        # Создаем пользователя Django
-        user = User.objects.create_user(
-            username=f"tg_{telegram_user.id}",
-            first_name=telegram_user.first_name,
-            last_name=telegram_user.last_name,
+        user = await create_allauth_user(tg_user)
+        await update.message.reply_text(
+            f"Вы зарегистрированы как {user.username}!\nТеперь вы можете войти на сайт."
         )
-
-        # Создаем запись TelegramUser
-        TelegramUser.objects.create(
-            user=user,
-            telegram_id=telegram_user.id,
-            username=telegram_user.username,
-            first_name=telegram_user.first_name,
-            last_name=telegram_user.last_name,
-        )
-        return user, True
 
 
 def setup_bot():
     """Настройка и запуск бота"""
-    updater = Updater(settings.TELEGRAM_BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
+    application = Application.builder().token(settings.TELEGRAM_BOT_TOKEN).build()
 
-    # Обработчики команд
-    dp.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
+    )
 
-    # Обработчик текстовых сообщений
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
-
-    # Запуск бота
-    updater.start_polling()
-    updater.idle()
+    return application

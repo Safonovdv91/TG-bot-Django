@@ -7,7 +7,6 @@ class TelegramBotConfig(AppConfig):
 
     def ready(self):
         if not hasattr(self, "bot_started"):
-            from django.conf import settings
             from .bot import setup_bot
             import threading
 

@@ -1,1 +1,1 @@
-default_app_config = "telegram_bot.apps.TelegramBotConfig"
+default_app_config = "telegram_bot.apps.BotConfig"
