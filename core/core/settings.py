@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "users",
     "index",
     "gymkhanagp",
+    "telegram_bot",
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -147,3 +148,6 @@ SECURE_PROXY_SSL_HEADER = (
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = (
     "https"  # Указываем allauth использовать HTTPS для redirect_uri
 )
+
+
+TELEGRAM_BOT_TOKEN = os.environ.get("OAUTH_TELEGRAM_SECRET")
