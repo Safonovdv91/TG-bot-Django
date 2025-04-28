@@ -1,10 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "index/layout.html" %}
 
-</body>
-</html>
+{% block title %}Главная страница{% endblock %}
+
+{% block content %}
+<div class="container content">
+
+    <h1>{{ article_title }}</h1>
+    <p>
+    {{ text }}
+    </p>
+    <hr class="border border-secondary border-3 opacity-75">
+    <p class="text te"><strong>Для использования сервиса вам необходимо <mark>авторизоваться</mark> через telegram.</strong></p>
+    <hr class="border border-secondary border-3 opacity-75">
+
+</div>
+{% endblock %}
+

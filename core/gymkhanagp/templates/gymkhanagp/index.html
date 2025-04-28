@@ -1,0 +1,60 @@
+{% extends "gymkhanagp/layout.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container content">
+<h1>{{ title }}</h1>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Class</th>
+      <th scope="col">Подписка</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for subscription in subscriptions %}
+    <tr>
+      <th scope="row">1</th>
+      <td>{{ subscription.user_subscription }}</td>
+      <td>{{ subscription.competition_type }}</td>
+      <td>{{ subscription.sportsman_class }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+    <!-- Список текущих подписок -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Активные подписки</h5>
+        </div>
+        <div class="card-body">
+            {% if subscriptions %}
+                <div class="list-group">
+                    {% for sub in subscriptions %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ sub.competition_type.name }}</strong>
+                                <span class="text-muted ms-2">{{ sub.sportsman_class.name }}</span>
+                            </div>
+                            <form method="post" action="{% url 'gymkhanagp:delete_subscription' sub.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="bi bi-trash"></i> Удалить
+                                </button>
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">У вас пока нет подписок</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+</div>
+{% endblock %}
+
