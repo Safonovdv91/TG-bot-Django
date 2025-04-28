@@ -62,34 +62,48 @@ def subscribe_class(request):
     """Добавление подписки"""
     competition_type_id = 1  # Фиксированный тип, как в вашем примере
     sportsman_class_id = request.GET.get("sportsman_class")
-    
-    subscription, created = Subscription.objects.get_or_create(
-        user_subscription=request.user.user_subscription,
+    user_subscription = UserSubscription.objects.get(user=request.user)
+
+    Subscription.objects.get_or_create(
+        user_subscription=user_subscription,
         competition_type_id=competition_type_id,
-        sportsman_class_id=sportsman_class_id
+        sportsman_class_id=sportsman_class_id,
     )
-    
-    return render(request, "gymkhanagp/components/class_input_on.html", {
-        "sportsman_class": get_object_or_404(SportsmanClassModel, pk=sportsman_class_id)
-    })
+
+    return render(
+        request,
+        "gymkhanagp/components/class_input_on.html",
+        {
+            "sportsman_class": get_object_or_404(
+                SportsmanClassModel, pk=sportsman_class_id
+            )
+        },
+    )
+
 
 @login_required
 def unsubscribe_class(request):
     """Удаление подписки"""
     competition_type_id = 1  # Фиксированный тип
     sportsman_class_id = request.GET.get("sportsman_class")
-    
+
     subscription = get_object_or_404(
         Subscription,
         user_subscription__user=request.user,
         competition_type_id=competition_type_id,
-        sportsman_class_id=sportsman_class_id
+        sportsman_class_id=sportsman_class_id,
     )
     subscription.delete()
-    
-    return render(request, "gymkhanagp/components/class_input_off.html", {
-        "sportsman_class": get_object_or_404(SportsmanClassModel, pk=sportsman_class_id)
-    })
+
+    return render(
+        request,
+        "gymkhanagp/components/class_input_off.html",
+        {
+            "sportsman_class": get_object_or_404(
+                SportsmanClassModel, pk=sportsman_class_id
+            )
+        },
+    )
 
 
 @login_required

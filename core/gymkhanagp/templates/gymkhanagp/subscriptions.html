@@ -42,7 +42,14 @@
           {% for sport_class in sportsman_classes %}
             <div class="list-group-item">
               <div class="form-check form-switch">
-                {% include "gymkhanagp/components/class_input_off.html" %}
+                {% with is_subscribed=sport_class|is_subscribed_class:user_subscriptions %}
+                {% if is_subscribed %}
+                {% include "gymkhanagp/components/class_input_on.html" with sportsman_class=sport_class%}
+                  {% else %}
+                {% include "gymkhanagp/components/class_input_off.html" with sportsman_class=sport_class%}
+                {% endif %}
+                {% endwith %}
+
                 <label class="form-check-label" for="class-{{ sport_class.id }}">
                     {{ sport_class.name }} | ({{ sport_class.description }})
                 </label>
