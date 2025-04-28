@@ -60,7 +60,7 @@ def subscriptions_view(request):
 @login_required
 def subscribe_class(request):
     """Добавление подписки"""
-    competition_type_id = 1  # Фиксированный тип, как в вашем примере
+    competition_type_id = 1
     sportsman_class_id = request.GET.get("sportsman_class")
     user_subscription = UserSubscription.objects.get(user=request.user)
 
@@ -84,7 +84,7 @@ def subscribe_class(request):
 @login_required
 def unsubscribe_class(request):
     """Удаление подписки"""
-    competition_type_id = 1  # Фиксированный тип
+    competition_type_id = 1
     sportsman_class_id = request.GET.get("sportsman_class")
 
     subscription = get_object_or_404(
