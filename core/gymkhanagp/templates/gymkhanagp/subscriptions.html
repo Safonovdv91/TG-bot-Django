@@ -50,12 +50,6 @@
                 {% endif %}
                 {% endwith %}
 
-                <label class="form-check-label" for="class-{{ sport_class.id }}">
-                    {{ sport_class.name }} | ({{ sport_class.description }})
-                </label>
-                <div class="spinner-{{ comp_type.id }}-{{ sport_class.id }} htmx-indicator">
-                  <div class="spinner-border spinner-border-sm"></div>
-              </div>
               </div>
             </div>
           {% endfor %}
