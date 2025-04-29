@@ -6,7 +6,7 @@ from gymkhanagp.models import UserSubscription, SportsmanClassModel, Subscriptio
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = get_user_model()
-
+    
     username = factory.Sequence(lambda n: f"user{n}")
     password = factory.PostGenerationMethodCall("set_password", "password")
 
@@ -32,4 +32,4 @@ class SubscriptionFactory(factory.django.DjangoModelFactory):
 
     user_subscription = factory.SubFactory(UserSubscriptionFactory)
     sportsman_class = factory.SubFactory(SportsmanClassFactory)
-    competition_type_id = 1  # Фиксированное значение как в вашем коде
+    competition_type_id = 1 

@@ -7,13 +7,18 @@ from gymkhanagp.models import Subscription
 class TestSubscriptionViews:
     def test_subscription_manage_authenticated(self, client, user):
         """Тест доступа к странице подписок для авторизованного пользователя"""
+        print("Start test 1")
         client.force_login(user)
         response = client.get(reverse("gymkhanagp:subscriptions"))
         assert response.status_code == 200
         assert "sportsman_classes" in response.context
+        print("End test 1")
+
 
     def test_unsubscribe_class(self, client, subscription):
         """Тест удаления подписки"""
+        print("Start test 2")
+
         client.force_login(subscription.user_subscription.user)
         url = (
             reverse("gymkhanagp:unsubscribe_class")
