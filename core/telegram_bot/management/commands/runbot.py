@@ -10,11 +10,13 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Starting bot..."))
         application = setup_bot()
 
-        # Для Django 4.1+ с поддержкой async
         async def run():
             await application.initialize()
             await application.start()
             await application.updater.start_polling()
-            await asyncio.Event().wait()  # Бесконечное ожидание
+            await asyncio.Event().wait()
 
-        asyncio.run(run())
+        try:
+            asyncio.run(run())
+        except KeyboardInterrupt:
+            self.stdout.write(self.style.SUCCESS("Shutting down bot..."))
