@@ -1,6 +1,11 @@
 import logging
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    filters,
+)
 from django.conf import settings
 from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
@@ -8,6 +13,7 @@ from .models import TelegramUser
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 async def create_allauth_user(telegram_user):
@@ -38,13 +44,16 @@ async def start(update: Update, context):
 async def handle_message(update: Update, context):
     """Асинхронный обработчик сообщений"""
     tg_user = update.effective_user
+    logger.info(f"Received message from {tg_user.username}")
 
     try:
         telegram_user = await TelegramUser.objects.aget(telegram_id=tg_user.id)
+        logger.info(f"Telegram user found: {telegram_user}")
         await update.message.reply_text(
-            f"Hello @{tg_user.username or tg_user.telegram_id}!"
+            f"Hello @{tg_user.username or tg_user.telegram_id}!, you are {telegram_user.telegram_id}!"
         )
     except TelegramUser.DoesNotExist:
+        logger.info(f"Telegram user not found: {tg_user}")
         user = await create_allauth_user(tg_user)
         await update.message.reply_text(
             f"Вы зарегистрированы как {user.username}!\nТеперь вы можете войти на сайт."
