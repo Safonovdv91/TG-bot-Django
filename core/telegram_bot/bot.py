@@ -13,6 +13,8 @@ from telegram.ext import (
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
+from gymkhanagp.models import UserSubscription
+
 User = get_user_model()
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -46,6 +48,13 @@ async def create_user_from_telegram(tg_user) -> (User, bool):
             "username": tg_user.username,
         },
     )
+
+    await UserSubscription.objects.acreate(
+        user=user,
+        is_active=True,
+        source="telegram",
+    )
+
     return user, True
 
 
