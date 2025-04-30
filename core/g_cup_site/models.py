@@ -1,0 +1,113 @@
+from django.db import models
+from django.core.validators import MinValueValidator
+from django.utils.safestring import mark_safe
+
+
+class Championship(models.Model):
+    """Модель чемпионата"""
+
+    id = models.IntegerField(primary_key=True, verbose_name="ID чемпионата")
+    title = models.CharField(max_length=255, verbose_name="Название чемпионата")
+    year = models.IntegerField(
+        validators=[MinValueValidator(1900)], verbose_name="Год проведения"
+    )
+    description = models.TextField(verbose_name="Описание (HTML)")
+
+    class Meta:
+        verbose_name = "Чемпионат"
+        verbose_name_plural = "Чемпионаты"
+        ordering = ["-year", "title"]
+
+    def __str__(self):
+        return f"{self.title} ({self.year})"
+
+    @property
+    def description_display(self):
+        return mark_safe(self.description)
+
+
+class StageModel(models.Model):
+    """Модель этапа чемпионата"""
+
+    STATUS_CHOICES = [
+        ("upcoming", "Предстоящий этап"),
+        ("accepting", "Приём результатов"),
+        ("judging", "Подведение итогов"),
+        ("completed", "Прошедший этап"),
+        ("canceled", "Этап отменён"),
+    ]
+
+    CLASS_CHOICES = [
+        ("A", "A"),
+        ("B", "B"),
+        ("C1", "C1"),
+        ("C2", "C2"),
+        ("C3", "C3"),
+        ("D1", "D1"),
+        ("D2", "D2"),
+        ("D3", "D3"),
+        ("D4", "D4"),
+        ("N", "N"),
+    ]
+
+    championship = models.ForeignKey(
+        Championship,
+        on_delete=models.CASCADE,
+        related_name="stages",
+        verbose_name="Чемпионат",
+    )
+    id = models.IntegerField(primary_key=True, verbose_name="ID этапа")
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, verbose_name="Статус этапа"
+    )
+    title = models.CharField(max_length=255, verbose_name="Название этапа")
+    description = models.TextField(verbose_name="Описание (HTML)")
+    users_count = models.IntegerField(verbose_name="Количество участников", default=0)
+    stage_class = models.CharField(
+        max_length=2, choices=CLASS_CHOICES, verbose_name="Класс этапа"
+    )
+    track_url = models.URLField(
+        max_length=500, blank=True, null=True, verbose_name="Ссылка на трассу"
+    )
+    date_start = models.DateTimeField(verbose_name="Дата начала")
+    date_end = models.DateTimeField(verbose_name="Дата окончания")
+    reference_time_seconds = models.IntegerField(verbose_name="Эталонное время (мс)")
+    reference_time = models.CharField(
+        max_length=20, verbose_name="Эталонное время (строка)"
+    )
+    best_time_seconds = models.IntegerField(
+        verbose_name="Лучшее время (мс)", blank=True, null=True
+    )
+    best_time = models.CharField(
+        max_length=20, verbose_name="Лучшее время (строка)", blank=True, null=True
+    )
+    best_user_id = models.IntegerField(
+        verbose_name="ID лучшего спортсмена", blank=True, null=True
+    )
+    best_user_first_name = models.CharField(
+        max_length=100, verbose_name="Имя лучшего спортсмена", blank=True, null=True
+    )
+    best_user_last_name = models.CharField(
+        max_length=100, verbose_name="Фамилия лучшего спортсмена", blank=True, null=True
+    )
+    best_user_full_name = models.CharField(
+        max_length=200,
+        verbose_name="Полное имя лучшего спортсмена",
+        blank=True,
+        null=True,
+    )
+    best_user_city = models.CharField(
+        max_length=100, verbose_name="Город лучшего спортсмена", blank=True, null=True
+    )
+
+    class Meta:
+        verbose_name = "Этап чемпионата"
+        verbose_name_plural = "Этапы чемпионатов"
+        ordering = ["date_start"]
+
+    def __str__(self):
+        return f"{self.title} ({self.get_status_display()})"
+
+    @property
+    def description_display(self):
+        return mark_safe(self.description)
