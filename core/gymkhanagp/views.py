@@ -129,35 +129,3 @@ def unsubscribe_class(request):
             )
         },
     )
-
-
-@login_required
-def toggle_subscription(request):
-    try:
-        competition_type_id = request.GET.get("competition_type")
-        sportsman_class_id = request.GET.get("sportsman_class")
-
-        if not competition_type_id or not sportsman_class_id:
-            return JsonResponse({"error": "Missing parameters"}, status=400)
-
-        user_subscription = UserSubscription.objects.get(user=request.user)
-
-        subscription, created = Subscription.objects.get_or_create(
-            user_subscription=user_subscription,
-            competition_type_id=competition_type_id,
-            sportsman_class_id=sportsman_class_id,
-        )
-
-        if not created:
-            subscription.delete()
-
-        return JsonResponse(
-            {
-                "is_subscribed": created,
-                "competition_type_id": competition_type_id,
-                "sportsman_class_id": sportsman_class_id,
-            }
-        )
-
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
