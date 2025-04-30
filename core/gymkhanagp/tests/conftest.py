@@ -18,6 +18,7 @@ def sportsman_class():
 def subscription():
     return SubscriptionFactory()
 
+
 @pytest.fixture()
 def user_1(db):
     user = User.objects.create_user("test_user")

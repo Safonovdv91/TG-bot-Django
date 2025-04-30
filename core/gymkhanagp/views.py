@@ -1,6 +1,6 @@
 from asgiref.sync import async_to_sync
 from django.contrib.auth.decorators import login_required
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, render
 
 from telegram_bot.utils.messages import send_telegram_message
