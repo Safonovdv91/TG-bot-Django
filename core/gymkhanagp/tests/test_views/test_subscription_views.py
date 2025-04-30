@@ -8,7 +8,7 @@ class TestSubscriptionViews:
     def test_subscription_manage_authenticated(self, client, user):
         """Тест доступа к странице подписок для авторизованного пользователя"""
         client.force_login(user)
-        response = client.get(reverse("gymkhanagp:subscriptions"))
+        response = client.get(reverse("gymkhanagp:index"))
         assert response.status_code == 200
         assert "sportsman_classes" in response.context
 
@@ -27,7 +27,7 @@ class TestSubscriptionViews:
     def test_anonymous_redirect(self, client):
         """Тест редиректа для анонимных пользователей"""
         for url in [
-            reverse("gymkhanagp:subscriptions"),
+            reverse("gymkhanagp:index"),
             reverse("gymkhanagp:subscribe_class"),
         ]:
             response = client.get(url)

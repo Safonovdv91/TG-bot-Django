@@ -1,7 +1,10 @@
+from asgiref.sync import async_to_sync
 from django.contrib.auth.decorators import login_required
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, render
 
+from telegram_bot.utils.messages import send_telegram_message
+from users.utils import get_telegram_id
 from .models import (
     Subscription,
     UserSubscription,
@@ -69,6 +72,16 @@ def subscribe_class(request):
         competition_type_id=competition_type_id,
         sportsman_class_id=sportsman_class_id,
     )
+    sportsman_class = get_object_or_404(SportsmanClassModel, pk=sportsman_class_id)
+    telegram_id = get_telegram_id(request.user)
+    if telegram_id:
+        message = (
+            f"✅ Вы успешно подписались на класс: {sportsman_class.name}!\n"
+            f"Теперь вы будете получать уведомления о соревнованиях."
+        )
+        async_to_sync(send_telegram_message)(
+            telegram_id, message
+        )  # Синхронный вызов асинхронной функции
 
     return render(
         request,
@@ -95,6 +108,18 @@ def unsubscribe_class(request):
     )
     subscription.delete()
 
+    sportsman_class = get_object_or_404(SportsmanClassModel, pk=sportsman_class_id)
+
+    telegram_id = get_telegram_id(request.user)  # Используем один из способов выше
+    if telegram_id:
+        message = (
+            f"❌ Вы успешно отписались от класа: {sportsman_class.name}!\n"
+            f"Теперь вы НЕ будете получать уведомления о соревнованиях."
+        )
+        async_to_sync(send_telegram_message)(
+            telegram_id, message
+        )  # Синхронный вызов асинхронной функции
+
     return render(
         request,
         "gymkhanagp/components/class_input_off.html",
@@ -104,35 +129,3 @@ def unsubscribe_class(request):
             )
         },
     )
-
-
-@login_required
-def toggle_subscription(request):
-    try:
-        competition_type_id = request.GET.get("competition_type")
-        sportsman_class_id = request.GET.get("sportsman_class")
-
-        if not competition_type_id or not sportsman_class_id:
-            return JsonResponse({"error": "Missing parameters"}, status=400)
-
-        user_subscription = UserSubscription.objects.get(user=request.user)
-
-        subscription, created = Subscription.objects.get_or_create(
-            user_subscription=user_subscription,
-            competition_type_id=competition_type_id,
-            sportsman_class_id=sportsman_class_id,
-        )
-
-        if not created:
-            subscription.delete()
-
-        return JsonResponse(
-            {
-                "is_subscribed": created,
-                "competition_type_id": competition_type_id,
-                "sportsman_class_id": sportsman_class_id,
-            }
-        )
-
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)

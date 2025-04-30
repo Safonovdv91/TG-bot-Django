@@ -20,7 +20,7 @@ def is_subscribed_class(sport_class, user_subscriptions):
     :return:
     """
     competition_type_id = 1
-    for sc_id_, _ in user_subscriptions:
+    for _, sc_id_ in user_subscriptions:
         if sc_id_ == sport_class.id and _ == competition_type_id:
             return True
     return False

@@ -10,6 +10,16 @@ class UserFactory(factory.django.DjangoModelFactory):
     username = factory.Sequence(lambda n: f"user{n}")
     password = factory.PostGenerationMethodCall("set_password", "password")
 
+    @classmethod
+    def _after_postgeneration(cls, instance, create, results=None):
+        """
+        Переопределение метода для сохранения пользователя после создания
+        объекта, (необходимо для корректной работы UserFactory), т.к. в следующих обновлениях pytest-factory
+        сохранение пользователя автоматически не будет происходить.
+        """
+        if create and results and not cls._meta.skip_postgeneration_save:
+            instance.save()
+
 
 class SportsmanClassFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -32,4 +42,4 @@ class SubscriptionFactory(factory.django.DjangoModelFactory):
 
     user_subscription = factory.SubFactory(UserSubscriptionFactory)
     sportsman_class = factory.SubFactory(SportsmanClassFactory)
-    competition_type_id = 1  # Фиксированное значение как в вашем коде
+    competition_type_id = 1
