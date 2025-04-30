@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "users",
     "index",
     "gymkhanagp",
+    "g_cup_site",
     "telegram_bot",
 ]
 
