@@ -143,7 +143,6 @@ class AthleteModel(models.Model):
         verbose_name="Город",
         related_name="athletes",
     )
-
     sportsman_class = models.CharField(
         max_length=2, choices=CLASS_CHOICES, verbose_name="Класс спортсмена"
     )
@@ -151,6 +150,22 @@ class AthleteModel(models.Model):
         max_length=500, verbose_name="Ссылка на фото спортсмена", null=True, blank=True
     )
     number = models.IntegerField(verbose_name="Номер спортсмена", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Спортсмен"
+        verbose_name_plural = "Спортсмены"
+        ordering = ["last_name", "first_name"]
+        indexes = [
+            models.Index(fields=["last_name", "first_name"]),
+            models.Index(fields=["sportsman_class"]),
+        ]
+
+    def __str__(self):
+        return f"{self.last_name} {self.first_name}"
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
 
 
 class StageResultModel(models.Model):
@@ -182,6 +197,9 @@ class StageResultModel(models.Model):
     video = models.URLField(max_length=500, blank=True, null=True, verbose_name="Видео")
 
     class Meta:
+        verbose_name = "Результат этапа"
+        verbose_name_plural = "Результаты этапов"
+        ordering = ["-date"]
         constraints = [
             models.UniqueConstraint(
                 fields=["stage", "user"], name="unique_stage_athlete"
