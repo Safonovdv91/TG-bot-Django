@@ -1,4 +1,3 @@
-import asyncio
 import os
 from enum import EnumType
 
@@ -14,7 +13,6 @@ class TypeChampionship(EnumType):
 
 
 class APIGetter:
-
     def __init__(self):
         self.url = os.environ.get("G_CUP_URL")
         self.api_key = os.environ.get("G_CUP_API_KEY")
