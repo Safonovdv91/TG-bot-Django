@@ -56,7 +56,9 @@ class APIGetter:
         else:
             return {}
 
-    def data_stage(self, stage_id: int, stage_type: TypeChampionship = "gp"):
+    def data_stage(
+        self, stage_id: int, stage_type: TypeChampionship = "gp"
+    ) -> {dict | None}:
         """Получает данные по этапам чемпионата"""
         url = f"{self.url}/stages/get?id=&type="
         response = httpx.get(
