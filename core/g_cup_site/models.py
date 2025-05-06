@@ -14,6 +14,7 @@ CLASS_CHOICES = [
     ("D3", "D3"),
     ("D4", "D4"),
     ("N", "N"),
+    (None, "None"),
 ]
 
 STATUS_CHOICES = [
@@ -42,7 +43,11 @@ class ChampionshipModel(models.Model):
     )
     description = models.TextField(verbose_name="Описание (HTML)")
     champ_type = models.CharField(
-        max_length=20, verbose_name="Тип чемпионата", choices=CHAMP_TYPE_CHOICES
+        max_length=20,
+        verbose_name="Тип чемпионата",
+        choices=CHAMP_TYPE_CHOICES,
+        null=True,
+        blank=True,
     )
 
     class Meta:
@@ -77,7 +82,10 @@ class StageModel(models.Model):
         max_length=2, choices=CLASS_CHOICES, verbose_name="Класс этапа"
     )
     track_url = models.URLField(
-        max_length=500, blank=True, null=True, verbose_name="Ссылка на трассу"
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name="Ссылка на трассу",
     )
     date_start = models.DateTimeField(verbose_name="Дата начала", null=True)
     date_end = models.DateTimeField(verbose_name="Дата окончания", null=True)
@@ -200,14 +208,14 @@ class StageResultModel(models.Model):
         verbose_name = "Результат этапа"
         verbose_name_plural = "Результаты этапов"
         ordering = ["-date"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["stage", "user"], name="unique_stage_athlete"
-            ),
-            models.UniqueConstraint(
-                fields=["stage", "place"], name="unique_stage_place"
-            ),
-        ]
+        # constraints = [
+        #     models.UniqueConstraint(
+        #         fields=["stage", "user"], name="unique_stage_athlete"
+        #     ),
+        #     models.UniqueConstraint(
+        #         fields=["stage", "place"], name="unique_stage_place"
+        #     ),
+        # ]
 
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name} на {self.stage.title} {self.place} место"
