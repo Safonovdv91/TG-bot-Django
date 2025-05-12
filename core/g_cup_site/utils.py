@@ -2,9 +2,11 @@ import logging
 import os
 from datetime import datetime
 from enum import EnumType
-from typing import Dict
+from typing import Dict, List
 
 import httpx
+from asgiref.sync import async_to_sync
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from dotenv import load_dotenv
@@ -17,9 +19,13 @@ from g_cup_site.models import (
     AthleteModel,
     StageResultModel,
 )
+from gymkhanagp.models import Subscription
+from telegram_bot.utils.messages import send_telegram_message
+from users.utils import get_telegram_id
 
 load_dotenv()
 logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 class TypeChampionship(EnumType):
@@ -187,6 +193,15 @@ class StageGGPHandeler:
             video=result_data.get("video"),
         )
         # todo ВЫсылаем сообщение для подписчиков(добавляем в очередь рассылок)
+        sport_class: str = athlete.sportsman_class
+        subscribers: List[User] = get_subscribers_for_class(sport_class)
+        for sub in subscribers:
+            message = f"🆕Новый результат в Этапе: {stage.title}:\n\n"
+            message += f"Спортсмен: {athlete.first_name} {athlete.last_name}\n"
+            message += f"Время: {result_data['resultTime']} секунд\n"
+            message += f"Видео: {result_data.get('video', '')}\n"
+            notify_user_telegram_message(sub, message)
+
         self.changes["new_result"] += 1
         logger.info(
             f"NEW RESULT: {athlete.first_name} {athlete.last_name} "
@@ -211,9 +226,21 @@ class StageGGPHandeler:
         existing_result.save()
 
         # todo Высылаем сообщение для подписчиков о улучшении результата(добавляем в очередь рассылок)
+        sport_class: str = existing_result.user.sportsman_class
+        subscribers: List[User] = get_subscribers_for_class(sport_class)
+        for sub in subscribers:
+            message = (
+                f"⚡Улучшение результата в Этапе: {existing_result.stage.title}:\n\n"
+            )
+            message += f"Спортсмен: {existing_result.user.first_name} {existing_result.user.last_name}\n"
+            message += f"Старое время: {existing_result.result_time}\n"
+            message += f"Новое время: {result_data['resultTime']} секунд ({time_diff / 1000:.2} )\n"
+            message += f"Видео: {result_data.get('video', '')}\n"
+            notify_user_telegram_message(sub, message)
+
         self.changes["improved_result"] += 1
         logger.info(
-            f"IMPROVEMENT: {existing_result.user.first_name} "
+            f"⚡IMPROVEMENT: {existing_result.user.first_name} "
             f"{existing_result.user.last_name} improved time in "
             f"stage {existing_result.stage.title} by "
             f"{time_diff / 1000:.3f} seconds "
@@ -259,3 +286,22 @@ class StageGGPHandeler:
             f"Без изменений: {athlete.first_name} {athlete.last_name} "
             f"в этапе {stage.title}"
         )
+
+
+def get_subscribers_for_class(sport_class: str) -> List[User]:
+    """Получение подписчиков для указанного класса спортсменов."""
+    subscriptions = Subscription.objects.filter(
+        sportsman_class__name=sport_class,
+    ).select_related("user_subscription__user", "sportsman_class", "competition_type")
+    users_subscribed = [sub.user_subscription.user for sub in subscriptions]
+
+    return users_subscribed
+
+
+def notify_user_telegram_message(user: User, message: str) -> None:
+    """Отправка уведомления в Telegram пользователю."""
+    # todo реализовать через очередь рассылок
+    logger.info(f"Отправка уведомления в Telegram для пользователя {user.username}")
+    telegram_id = get_telegram_id(user)
+    async_to_sync(send_telegram_message)(telegram_id, message)
+    logger.info(f"Уведомление отправлено в Telegram для пользователя {user.username}")
