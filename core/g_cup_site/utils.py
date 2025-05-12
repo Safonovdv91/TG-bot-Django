@@ -179,17 +179,15 @@ class StageGGPHandeler:
             stage=stage,
             user=athlete,
             motorcycle=motorcycle,
-            defaults={
-                "date": self.parse_unix_time(result_data["date"]),
-                "place": result_data.get("place", 0),
-                "fine": result_data.get("fine", 0),
-                "result_time_seconds": result_data["resultTimeSeconds"],
-                "result_time": result_data["resultTime"],
-                "video": result_data.get("video"),
-            },
+            date=self.parse_unix_time(result_data["date"]),
+            place=result_data.get("place", 0),
+            fine=result_data.get("fine", 0),
+            result_time_seconds=result_data["resultTimeSeconds"],
+            result_time=result_data["resultTime"],
+            video=result_data.get("video"),
         )
         # todo ВЫсылаем сообщение для подписчиков(добавляем в очередь рассылок)
-        self.changes["new_results"] += 1
+        self.changes["new_result"] += 1
         logger.info(
             f"NEW RESULT: {athlete.first_name} {athlete.last_name} "
             f"added to stage {self.stage.title} with time {result_data['resultTime']}"
