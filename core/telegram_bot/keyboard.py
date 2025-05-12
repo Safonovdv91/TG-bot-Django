@@ -2,8 +2,6 @@ from abc import ABC, abstractmethod
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from telegram_bot.manager import KeyboardManager
-
 
 class KeyboardActionHandler(ABC):
     @property
