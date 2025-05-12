@@ -198,7 +198,7 @@ class StageResultModel(models.Model):
         related_name="results",
     )
     date = models.DateTimeField(verbose_name="Дата заезда")
-    place = models.IntegerField(verbose_name="Место в этапе")
+    place = models.IntegerField(verbose_name="Место в этапе", blank=True, null=True)
     fine = models.IntegerField(verbose_name="Штраф")
     result_time_seconds = models.IntegerField(verbose_name="Итоговое время (мс)")
     result_time = models.CharField(max_length=20, verbose_name="Итоговое время")
