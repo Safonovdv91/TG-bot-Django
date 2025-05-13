@@ -14,6 +14,7 @@ from django.contrib.auth import get_user_model
 
 from telegram_bot.manager import KeyboardManager
 from telegram_bot.states import States
+from telegram_bot.utils.users import create_user_from_telegram
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -29,9 +30,21 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None | States:
     keyboard_manager = KeyboardManager()
-    await update.message.reply_text(
-        "Добро пожаловать!", reply_markup=keyboard_manager.get_main_keyboard()
-    )
+    tg_user = update.effective_user
+    user, created = await create_user_from_telegram(tg_user)
+    if created:
+        logger.info(f"New user: {user}")
+        await update.message.reply_text(
+            f"Добро пожаловать, {user.username}!",
+            reply_markup=keyboard_manager.get_main_keyboard(),
+        )
+    else:
+        logger.info(f"Existing user: {user}")
+        await update.message.reply_text(
+            f"Вы уже зарегестрированы, {user.username}!",
+            reply_markup=keyboard_manager.get_main_keyboard(),
+        )
+
     context.user_data["state"] = States.MAIN_MENU
     return States.MAIN_MENU
 
@@ -61,8 +74,10 @@ def setup_bot():
         },
         fallbacks=[CommandHandler("start", start)],
     )
+    command_handler = CommandHandler("start", start)
 
     application.add_handler(conv_handler)
+    application.add_handler(command_handler)
 
     # Обработчик для любых других сообщений
     application.add_handler(
