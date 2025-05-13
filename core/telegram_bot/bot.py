@@ -7,20 +7,19 @@ from telegram.ext import (
     MessageHandler,
     filters,
     ContextTypes,
+    ConversationHandler,
 )
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from telegram_bot.manager import KeyboardManager
+from telegram_bot.states import States
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
-
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    keyboard_manager = KeyboardManager()
-    await keyboard_manager._handle_regular_message(update, context)
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -28,13 +27,51 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await keyboard_manager.handle_message(update, context)
 
 
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None | States:
+    keyboard_manager = KeyboardManager()
+    await update.message.reply_text(
+        "Добро пожаловать!", reply_markup=keyboard_manager.get_main_keyboard()
+    )
+    context.user_data["state"] = States.MAIN_MENU
+    return States.MAIN_MENU
+
+
 def setup_bot():
-    """Настройка и запуск бота"""
     application = Application.builder().token(settings.TELEGRAM_BOT_TOKEN).build()
 
-    application.add_handler(CommandHandler("start", start))
+    keyboard_manager = KeyboardManager()
+
+    conv_handler = ConversationHandler(
+        entry_points=[
+            MessageHandler(
+                filters.TEXT & ~filters.COMMAND, keyboard_manager.handle_message
+            )
+        ],
+        states={
+            States.MAIN_MENU: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, keyboard_manager.handle_message
+                )
+            ],
+            States.CLASS_SELECTION: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, keyboard_manager.handle_message
+                )
+            ],
+        },
+        fallbacks=[CommandHandler("start", start)],
+    )
+
+    application.add_handler(conv_handler)
+
+    # Обработчик для любых других сообщений
     application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
+        MessageHandler(
+            filters.ALL & ~filters.COMMAND,
+            lambda update, context: update.message.reply_text(
+                "Пожалуйста, используйте команду /start для начала работы"
+            ),
+        )
     )
 
     return application
