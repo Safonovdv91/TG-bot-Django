@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.telegram",
     "django_celery_results",
+    "django_celery_beat",
     "index",
     "gymkhanagp",
     "g_cup_site",
