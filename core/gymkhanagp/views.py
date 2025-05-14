@@ -1,9 +1,7 @@
-from asgiref.sync import async_to_sync
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, render
 
-from telegram_bot.utils.messages import send_telegram_message
 from users.utils import get_telegram_id
 from .models import (
     Subscription,
@@ -11,6 +9,7 @@ from .models import (
     CompetitionTypeModel,
     SportsmanClassModel,
 )
+from .tasks import send_telegram_message_task
 
 
 @login_required(login_url="/accounts/login")
@@ -63,6 +62,7 @@ def subscriptions_view(request):
 @login_required
 def subscribe_class(request):
     """Добавление подписки"""
+
     competition_type_id = 1
     sportsman_class_id = request.GET.get("sportsman_class")
     user_subscription = UserSubscription.objects.get(user=request.user)
@@ -79,9 +79,8 @@ def subscribe_class(request):
             f"✅ Вы успешно подписались на класс: {sportsman_class.name}!\n"
             f"Теперь вы будете получать уведомления о соревнованиях."
         )
-        async_to_sync(send_telegram_message)(
-            telegram_id, message
-        )  # Синхронный вызов асинхронной функции
+
+        send_telegram_message_task.delay(telegram_id, message)
 
     return render(
         request,
@@ -116,9 +115,7 @@ def unsubscribe_class(request):
             f"❌ Вы успешно отписались от класа: {sportsman_class.name}!\n"
             f"Теперь вы НЕ будете получать уведомления о соревнованиях."
         )
-        async_to_sync(send_telegram_message)(
-            telegram_id, message
-        )  # Синхронный вызов асинхронной функции
+        send_telegram_message_task.delay(telegram_id, message)
 
     return render(
         request,
