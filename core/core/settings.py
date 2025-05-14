@@ -3,6 +3,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
+load_dotenv("core/.env")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 # BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
@@ -26,7 +27,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.telegram",
-    "users",
+    "django_celery_results",
     "index",
     "gymkhanagp",
     "g_cup_site",
@@ -162,3 +163,10 @@ ACCOUNT_DEFAULT_HTTP_PROTOCOL = (
 
 TELEGRAM_BOT_TOKEN = os.environ.get("OAUTH_TELEGRAM_SECRET")
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"  # Временно для разработки
+
+# Celery Configuration Options
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True  # Для отслеживания статуса задачи если в исполнении
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_BROKER_URL = "redis://localhost:10003/0"
