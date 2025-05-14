@@ -5,7 +5,6 @@ from enum import EnumType
 from typing import Dict, List
 
 import httpx
-from asgiref.sync import async_to_sync
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
@@ -20,7 +19,7 @@ from g_cup_site.models import (
     StageResultModel,
 )
 from gymkhanagp.models import Subscription
-from telegram_bot.utils.messages import send_telegram_message
+from gymkhanagp.tasks import send_telegram_message_task
 from users.utils import get_telegram_id
 
 load_dotenv()
@@ -303,5 +302,12 @@ def notify_user_telegram_message(user: User, message: str) -> None:
     # todo реализовать через очередь рассылок
     logger.info(f"Отправка уведомления в Telegram для пользователя {user.username}")
     telegram_id = get_telegram_id(user)
-    async_to_sync(send_telegram_message)(telegram_id, message)
-    logger.info(f"Уведомление отправлено в Telegram для пользователя {user.username}")
+    if telegram_id and user.is_active:
+        logger.info("Создаем задачу на отправку сообщения в Telegram")
+        send_telegram_message_task.delay(telegram_id, message)
+        logger.info(
+            f"Уведомление отправлено в Telegram для пользователя {user.username}"
+        )
+        return
+
+    logger.warning(f"Пользователь {user.username} не имеет Telegram ID или не активный")
