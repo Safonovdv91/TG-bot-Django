@@ -71,7 +71,6 @@ class SubscriptionKeyboardHandler(KeyboardActionHandler):
         social_account = await SocialAccount.objects.filter(uid=str(user.id)).afirst()
 
         if not social_account:
-            # todo Зарегистрировать пользователя
             await update.message.reply_text("Сначала зарегистрируйтесь через /start")
             return States.MAIN_MENU
 
