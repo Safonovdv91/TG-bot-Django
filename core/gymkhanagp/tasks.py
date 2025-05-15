@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
     retry_backoff=True,
     retry_backoff_max=600,
     retry_jitter=True,
+    acks_late=True,
+    reject_on_worker_lost=True,
     autoretry_for=(Exception,),
 )
 def send_telegram_message_task(self, telegram_id: int, message: str) -> str:
