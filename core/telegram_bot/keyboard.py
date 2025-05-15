@@ -47,8 +47,10 @@ class SendTrackHandler(KeyboardActionHandler):
         """Обработка нажатия кнопки"""
         active_stage = await self._get_active_stage()
         if active_stage and active_stage.track_url:
-            await update.message.reply_text(
-                text=f"Трасса для этапа '{active_stage.title}':\n{active_stage.track_url}"
+            await update.message.reply_photo(
+                photo=active_stage.track_url,
+                caption=f"{active_stage.title}\n "
+                f"https://gymkhana-cup.ru/competitions/special-stage?id={active_stage.stage_id}",
             )
         else:
             await update.message.reply_text(
