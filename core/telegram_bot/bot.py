@@ -33,11 +33,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None | St
     tg_user = update.effective_user
     user, created = await create_user_from_telegram(tg_user)
     if created:
+        created_message = """
+        Дорогой друг, к сожалению по некоторым причинам база данных с твоими подписками на классы канула в лету.
+        Понимаю тебя, и надеюсь что ты сможешь вспомнить за кем хотел следить и какие классы тебя интересовали больше всего.
+        На данный момент я переписан с нуля, и совсем скоро обзаведусь новым и полезным функционалом. тут могут быть небольшие ошибки,
+        но они будут исправлены в ближайшее время. и если ты столкнулся с ними - напиши моему хозяину @SoftikMy.
+        Ну а вообще не забывай что ты должнен тренироваться - ведь постоянные тренировки и бодрый дух помогут тебе!
+        """
         logger.info(f"New user: {user}")
+        user_name = tg_user.first_name or user.username
         await update.message.reply_text(
-            f"Добро пожаловать, {user.username}!",
+            f"Добро пожаловать, {user_name}!",
             reply_markup=keyboard_manager.get_main_keyboard(),
         )
+        await update.message.reply_text(text=created_message)
     else:
         logger.info(f"Existing user: {user}")
         await update.message.reply_text(

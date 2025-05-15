@@ -47,8 +47,10 @@ class SendTrackHandler(KeyboardActionHandler):
         """Обработка нажатия кнопки"""
         active_stage = await self._get_active_stage()
         if active_stage and active_stage.track_url:
-            await update.message.reply_text(
-                text=f"Трасса для этапа '{active_stage.title}':\n{active_stage.track_url}"
+            await update.message.reply_photo(
+                photo=active_stage.track_url,
+                caption=f"{active_stage.title}\n "
+                f"https://gymkhana-cup.ru/competitions/special-stage?id={active_stage.stage_id}",
             )
         else:
             await update.message.reply_text(
@@ -69,7 +71,6 @@ class SubscriptionKeyboardHandler(KeyboardActionHandler):
         social_account = await SocialAccount.objects.filter(uid=str(user.id)).afirst()
 
         if not social_account:
-            # todo Зарегистрировать пользователя
             await update.message.reply_text("Сначала зарегистрируйтесь через /start")
             return States.MAIN_MENU
 
@@ -117,7 +118,7 @@ class SubscriptionKeyboardHandler(KeyboardActionHandler):
         keyboard = []
         row = []
         for i, cls in enumerate(classes, 1):
-            prefix = "🟩" if cls.name in subscribed_classes else "🔲"
+            prefix = cls.subscribe_emoji if cls.name in subscribed_classes else "🔲"
             row.append(f"{prefix} {cls.name}")
             if i % 3 == 0 or i == len(classes):
                 keyboard.append(row)

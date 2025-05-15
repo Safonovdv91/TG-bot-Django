@@ -191,7 +191,6 @@ class StageGGPHandeler:
             result_time=result_data["resultTime"],
             video=result_data.get("video"),
         )
-        # todo ВЫсылаем сообщение для подписчиков(добавляем в очередь рассылок)
         sport_class: str = athlete.sportsman_class
         subscribers: List[User] = get_subscribers_for_class(sport_class)
         for sub in subscribers:
@@ -224,7 +223,6 @@ class StageGGPHandeler:
         existing_result.video = result_data.get("video", existing_result.video)
         existing_result.save()
 
-        # todo Высылаем сообщение для подписчиков о улучшении результата(добавляем в очередь рассылок)
         sport_class: str = existing_result.user.sportsman_class
         subscribers: List[User] = get_subscribers_for_class(sport_class)
         for sub in subscribers:
@@ -232,8 +230,10 @@ class StageGGPHandeler:
                 f"⚡Улучшение результата в Этапе: {existing_result.stage.title}:\n\n"
             )
             message += f"Спортсмен: {existing_result.user.first_name} {existing_result.user.last_name}\n"
-            message += f"Старое время: {existing_result.result_time}\n"
-            message += f"Новое время: {result_data['resultTime']} секунд ({time_diff / 1000:.2} )\n"
+            message += f"Старое время: {old_time / 1000:.2f} \n"
+            message += (
+                f"Новое время: {result_data['resultTime']} (⬆️{time_diff / 1000:.2f})\n"
+            )
             message += f"Видео: {result_data.get('video', '')}\n"
             notify_user_telegram_message(sub, message)
 
