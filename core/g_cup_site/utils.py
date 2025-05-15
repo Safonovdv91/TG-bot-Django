@@ -18,7 +18,7 @@ from g_cup_site.models import (
     AthleteModel,
     StageResultModel,
 )
-from gymkhanagp.models import Subscription
+from gymkhanagp.models import Subscription, SportsmanClassModel
 from gymkhanagp.tasks import send_telegram_message_task
 from users.utils import get_telegram_id
 
@@ -193,9 +193,12 @@ class StageGGPHandeler:
         )
         sport_class: str = athlete.sportsman_class
         subscribers: List[User] = get_subscribers_for_class(sport_class)
+        subscribe_emoji = SportsmanClassModel.objects.get(
+            name=sport_class
+        ).subscribe_emoji
         for sub in subscribers:
             message = f"🆕Новый результат в Этапе: {stage.title}:\n\n"
-            message += f"Спортсмен: {athlete.first_name} {athlete.last_name}\n"
+            message += f"[{subscribe_emoji}[{sport_class}]: {athlete.first_name} {athlete.last_name}\n"
             message += f"Время: {result_data['resultTime']} секунд\n"
             message += f"Видео: {result_data.get('video', '')}\n"
             notify_user_telegram_message(sub, message)
@@ -225,11 +228,14 @@ class StageGGPHandeler:
 
         sport_class: str = existing_result.user.sportsman_class
         subscribers: List[User] = get_subscribers_for_class(sport_class)
+        subscribe_emoji = SportsmanClassModel.objects.get(
+            name=sport_class
+        ).subscribe_emoji
         for sub in subscribers:
             message = (
                 f"⚡Улучшение результата в Этапе: {existing_result.stage.title}:\n\n"
             )
-            message += f"Спортсмен: {existing_result.user.first_name} {existing_result.user.last_name}\n"
+            message += f"{subscribe_emoji}[{sport_class}]: {existing_result.user.first_name} {existing_result.user.last_name}\n"
             message += f"Старое время: {old_time / 1000:.2f} \n"
             message += (
                 f"Новое время: {result_data['resultTime']} (⬆️{time_diff / 1000:.2f})\n"
