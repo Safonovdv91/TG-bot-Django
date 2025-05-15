@@ -117,7 +117,7 @@ class SubscriptionKeyboardHandler(KeyboardActionHandler):
         keyboard = []
         row = []
         for i, cls in enumerate(classes, 1):
-            prefix = "🟩" if cls.name in subscribed_classes else "🔲"
+            prefix = cls.subscribe_emoji if cls.name in subscribed_classes else "🔲"
             row.append(f"{prefix} {cls.name}")
             if i % 3 == 0 or i == len(classes):
                 keyboard.append(row)
