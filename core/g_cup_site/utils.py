@@ -230,7 +230,7 @@ class StageGGPHandeler:
                 f"⚡Улучшение результата в Этапе: {existing_result.stage.title}:\n\n"
             )
             message += f"Спортсмен: {existing_result.user.first_name} {existing_result.user.last_name}\n"
-            message += f"Старое время: {old_time/1000:.2f} \n"
+            message += f"Старое время: {old_time / 1000:.2f} \n"
             message += (
                 f"Новое время: {result_data['resultTime']} (⬆️{time_diff / 1000:.2f})\n"
             )
