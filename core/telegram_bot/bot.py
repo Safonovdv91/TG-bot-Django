@@ -32,6 +32,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None | St
     keyboard_manager = KeyboardManager()
     tg_user = update.effective_user
     user, created = await create_user_from_telegram(tg_user)
+    user_name = tg_user.first_name or user.username
     if created:
         created_message = """
         Дорогой друг, к сожалению по некоторым причинам база данных с твоими подписками на классы канула в лету.
@@ -41,7 +42,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None | St
         Ну а вообще не забывай что ты должнен тренироваться - ведь постоянные тренировки и бодрый дух помогут тебе!
         """
         logger.info(f"New user: {user}")
-        user_name = tg_user.first_name or user.username
         await update.message.reply_text(
             f"Добро пожаловать, {user_name}!",
             reply_markup=keyboard_manager.get_main_keyboard(),
@@ -50,7 +50,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None | St
     else:
         logger.info(f"Existing user: {user}")
         await update.message.reply_text(
-            f"Вы уже зарегестрированы, {user.username}!",
+            f"Вы уже зарегестрированы, {user_name}!",
             reply_markup=keyboard_manager.get_main_keyboard(),
         )
 
