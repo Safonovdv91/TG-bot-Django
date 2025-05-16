@@ -1,0 +1,11 @@
+<div class="card">
+    <div class="card-body">
+        <button class="btn btn-success"
+                hx-get="{% url 'gymkhanagp:unsubscribe_class' %}?sportsman_class={{ sportsman_class.id }}"
+                hx-target="closest .card"
+                hx-indicator="spinner-{{ sportsman_class.id }}"
+                hx-swap="outerHTML">
+            <i class="bi bi-check-circle-fill">{{ sportsman_class.name }} | </i> Подписан
+        </button>
+    </div>
+</div>

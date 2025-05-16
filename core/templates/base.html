@@ -20,20 +20,20 @@
 
 </head>
 
-{% include "index/components/navbar.html" %}
 
-<body class="h-100 text-center" {% block hx-headers %}{% endblock %}>
-    <main>
+<body class="d-flex flex-column min-vh-100" {% block hx-headers %}{% endblock %}>
+    {% include "index/components/navbar.html" %}
+  <main>
     <div class="container content">
+
                 {% block main_content %}
                 {% endblock %}
     </div>
-    </main>
-    <footer class="footer mt-auto py-3">
-        {% include "index/footer.html" %}
-    </footer>
+  </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    {% block script %}{% endblock %}
+    {% include "components/footer.html" %}
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {% block script %}{% endblock %}
 </body>
 </html>
