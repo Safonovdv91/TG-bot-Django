@@ -199,6 +199,7 @@ class StageGGPHandeler:
             message = f"🆕Новый результат в Этапе: {stage.title}:\n\n"
             message += f"{subscribe_emoji}[{sport_class}]: {athlete.first_name} {athlete.last_name}\n"
             message += f"Время: {result_data['resultTime']} секунд [{result_data['percent']} %]\n"
+            message += f"Мотоцикл: {result_data.get('motorcycle', '---')}\n"
             message += f"Видео: {result_data.get('video', '')}\n"
             notify_user_telegram_message(sub, message)
 
