@@ -185,7 +185,7 @@ class ClassSelectionHandler(KeyboardActionHandler):
 
             keyboard.append(["🔙 Назад"])
 
-            action = "подписан" if not is_subscribed else "отписан"
+            action = "подписаны" if not is_subscribed else "отписаны"
             await update.message.reply_text(
                 f"Вы {action} на класс {class_name}",
                 reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
