@@ -178,7 +178,6 @@ class StageGGPHandeler:
         result_data: Dict,
     ) -> None:
         """Создание нового результата."""
-
         motorcycle = self.get_or_create_motorcycle(result_data["motorcycle"])
         StageResultModel.objects.create(
             stage=stage,
@@ -191,15 +190,15 @@ class StageGGPHandeler:
             result_time=result_data["resultTime"],
             video=result_data.get("video"),
         )
-        sport_class: str = athlete.sportsman_class
+        athlete_class = SportsmanClassModel.objects.get(name=result_data.get("athleteClass"))
+        sport_class: str = athlete_class.name
+        subscribe_emoji = athlete_class.subscribe_emoji
+
         subscribers: List[User] = get_subscribers_for_class(sport_class)
-        subscribe_emoji = SportsmanClassModel.objects.get(
-            name=sport_class
-        ).subscribe_emoji
         for sub in subscribers:
             message = f"🆕Новый результат в Этапе: {stage.title}:\n\n"
-            message += f"[{subscribe_emoji}[{sport_class}]: {athlete.first_name} {athlete.last_name}\n"
-            message += f"Время: {result_data['resultTime']} секунд\n"
+            message += f"{subscribe_emoji}[{sport_class}]: {athlete.first_name} {athlete.last_name}\n"
+            message += f"Время: {result_data['resultTime']} секунд [{result_data['percent']} %]\n"
             message += f"Видео: {result_data.get('video', '')}\n"
             notify_user_telegram_message(sub, message)
 
@@ -218,7 +217,6 @@ class StageGGPHandeler:
         """Обновление существующего результата."""
         old_time = existing_result.result_time_seconds
         time_diff = old_time - new_time
-
         existing_result.result_time_seconds = new_time
         existing_result.result_time = result_data["resultTime"]
         existing_result.place = result_data.get("place", existing_result.place)
@@ -226,11 +224,11 @@ class StageGGPHandeler:
         existing_result.video = result_data.get("video", existing_result.video)
         existing_result.save()
 
-        sport_class: str = existing_result.user.sportsman_class
+        athlete_class = SportsmanClassModel.objects.get(name=result_data.get("athleteClass"))
+        sport_class: str = athlete_class.name
+        subscribe_emoji = athlete_class.subscribe_emoji
+
         subscribers: List[User] = get_subscribers_for_class(sport_class)
-        subscribe_emoji = SportsmanClassModel.objects.get(
-            name=sport_class
-        ).subscribe_emoji
         for sub in subscribers:
             message = (
                 f"⚡Улучшение результата в Этапе: {existing_result.stage.title}:\n\n"
@@ -238,8 +236,9 @@ class StageGGPHandeler:
             message += f"{subscribe_emoji}[{sport_class}]: {existing_result.user.first_name} {existing_result.user.last_name}\n"
             message += f"Старое время: {old_time / 1000:.2f} \n"
             message += (
-                f"Новое время: {result_data['resultTime']} (⬆️{time_diff / 1000:.2f})\n"
+                f"Время: {result_data['resultTime']} [{result_data['percent']}%] (⬆️{time_diff / 1000:.2f})\n"
             )
+            message += f"Мотоцикл: {result_data.get('motorcycle', '---')}\n"
             message += f"Видео: {result_data.get('video', '')}\n"
             notify_user_telegram_message(sub, message)
 
