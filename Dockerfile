@@ -1,20 +1,28 @@
-FROM python:3.13-slim
+# Базовый образ с Python 3.13 c uv
+FROM python:3.13-slim as builder
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Copy the project into the image
 WORKDIR /app
-# Копируем зависимости
+
 COPY pyproject.toml .
-# Установка зависимостей через uv
-RUN uv lock
-RUN uv sync --frozen
+RUN uv lock && uv sync --frozen
 
-ADD core .
+# Финальный образ
+FROM python:3.13-slim
 
-# Sync the project into a new environment, asserting the lockfile is up to date
+WORKDIR /app
+
+COPY --from=builder /bin/uv /bin/uv
+COPY --from=builder /bin/uvx /bin/uvx
+
+COPY --from=builder /app/.venv /app/.venv
+COPY core .
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 8000
-CMD uv run manage.py collectstatic --noinput \
-    && uv run manage.py makemigrations \
-    && uv run manage.py migrate \
-    && uv run gunicorn core.wsgi:application --bind 0.0.0.0:8000
+
+CMD ["sh", "-c", \
+    "python manage.py collectstatic --noinput && \
+     python manage.py migrate && \
+     gunicorn core.wsgi:application --bind 0.0.0.0:8000"]

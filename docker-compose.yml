@@ -63,42 +63,57 @@ services:
     networks:
       mg_bot-net:
 
-#  celery-worker:
-#    build:
-#      context: .
-#    container_name: mg_bot_celery-worker
-#    restart: unless-stopped
-#    env_file:
-#      - .env.prod
-#    command:
-#      - uv run celery -A app worker --loglevel=info
-#    volumes:
-#      - media_data:/app/media
-#      - mg_db_backup:/app/backups
+  celery-worker:
+    build:
+      context: .
+    container_name: mg_bot_celery-worker
+    restart: unless-stopped
+    command:
+      - celery
+      - -A
+      - core
+      - worker
+      - --loglevel=info
+      - --concurrency=1
+    depends_on:
+      - mg_bot_db
+      - mg_bot_redis
+    volumes:
+      - mg_db_backup:/app/backups
+    networks:
+      mg_bot-net:
 
+  celery-beat:
+    build:
+      context: .
+    command:
+      - celery
+      - -A
+      - core
+      - beat
+      - --loglevel=info
+      - --scheduler=django_celery_beat.schedulers:DatabaseScheduler
+    depends_on:
+      - mg_bot_db
+      - mg_bot_redis
+    networks:
+      - mg_bot-net
 
-
-
-
-
-#    command: celery -A app worker --loglevel=info
-#    depends_on:
-#      - mg_bot_redis
-#    networks:
-#      mg_bot-net:
-#
-#  celery-beat:
-#    build: django/
-#    container_name: mg_bot_celery-beat
-#    restart: unless-stopped
-#    env_file: .env.prod
-#    volumes:
-#      - media_data:/app/media
-#    command: celery -A app beat --loglevel=info
-#    depends_on:
-#      - mg_bot_redis
-#    networks:
-#      mg_bot-net:
+  flower:
+    build:
+      context: .
+    command:
+      - celery
+      - -A
+      - core
+      - flower
+      - --port=5555
+    ports:
+      - "10005:5555"
+    depends_on:
+      - celery-worker
+    networks:
+      - mg_bot-net
 
 networks:
   mg_bot-net:
