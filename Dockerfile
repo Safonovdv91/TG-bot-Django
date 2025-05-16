@@ -12,7 +12,9 @@ RUN uv sync --frozen
 ADD core .
 
 # Sync the project into a new environment, asserting the lockfile is up to date
-RUN uv run manage.py collectstatic --noinput
 
 EXPOSE 8000
-CMD uv run manage.py runserver 0.0.0.0:8000
+CMD uv run manage.py collectstatic --noinput \
+    && uv run manage.py makemigrations \
+    && uv run manage.py migrate \
+    && uv run gunicorn core.wsgi:application --bind 0.0.0.0:8000
