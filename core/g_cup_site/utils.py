@@ -196,8 +196,8 @@ class StageGGPHandeler:
 
         subscribers: List[User] = get_subscribers_for_class(sport_class)
         for sub in subscribers:
-            message = f"🆕Новый результат в Этапе: {stage.title}:\n\n"
-            message += f"{subscribe_emoji}[{sport_class}]: {athlete.first_name} {athlete.last_name}\n"
+            message = f"🆕 Новый результат в Этапе: {stage.title}:\n\n"
+            message += f"{subscribe_emoji} [{sport_class}]: {athlete.first_name} {athlete.last_name}\n"
             message += f"Время: {result_data['resultTime']} секунд [{result_data['percent']} %]\n"
             message += f"Мотоцикл: {result_data.get('motorcycle', '---')}\n"
             message += f"Видео: {result_data.get('video', '')}\n"
@@ -232,9 +232,9 @@ class StageGGPHandeler:
         subscribers: List[User] = get_subscribers_for_class(sport_class)
         for sub in subscribers:
             message = (
-                f"⚡Улучшение результата в Этапе: {existing_result.stage.title}:\n\n"
+                f"⚡ Улучшение результата в Этапе: {existing_result.stage.title}:\n\n"
             )
-            message += f"{subscribe_emoji}[{sport_class}]: {existing_result.user.first_name} {existing_result.user.last_name}\n"
+            message += f"{subscribe_emoji} [{sport_class}]: {existing_result.user.first_name} {existing_result.user.last_name}\n"
             message += f"Старое время: {old_time / 1000:.2f} \n"
             message += (
                 f"Время: {result_data['resultTime']} [{result_data['percent']}%] (⬆️{time_diff / 1000:.2f})\n"
