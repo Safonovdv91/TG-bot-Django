@@ -43,6 +43,18 @@ services:
     networks:
       mg_bot-net:
 
+  bot:
+    build: .
+    container_name: mg_tgbot
+    command: python manage.py runbot
+    env_file:
+      - .env.prod
+    depends_on:
+      - mg_bot_db
+      - mg_bot_redis
+    networks:
+      mg_bot-net:
+
   mg_bot_nginx:
     image: nginx:latest
     container_name: mg_bot_nginx
@@ -62,6 +74,8 @@ services:
       context: .
     container_name: mg_bot_celery-worker
     restart: unless-stopped
+    env_file:
+      - .env.prod
     command:
       - celery
       - -A
@@ -80,6 +94,10 @@ services:
   celery-beat:
     build:
       context: .
+    container_name: mg_bot_celery_beat
+    restart: unless-stopped
+    env_file:
+      - .env.prod
     command:
       - celery
       - -A
@@ -96,6 +114,9 @@ services:
   flower:
     build:
       context: .
+    container_name: mg_bot_flower
+    env_file:
+      - .env.prod
     command:
       - celery
       - -A
