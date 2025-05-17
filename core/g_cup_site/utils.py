@@ -34,8 +34,8 @@ class TypeChampionship(EnumType):
 
 class APIGetter:
     def __init__(self):
-        self.url = os.environ.get("G_CUP_URL")
-        self.api_key = os.environ.get("G_CUP_API_KEY")
+        self.url = os.environ.get("GYMKHANA_CUP_URL")
+        self.api_key = os.environ.get("GYMKHANA_CUP_TOKEN")
 
     def get_data_championships(
         self,
@@ -190,7 +190,9 @@ class StageGGPHandeler:
             result_time=result_data["resultTime"],
             video=result_data.get("video"),
         )
-        athlete_class = SportsmanClassModel.objects.get(name=result_data.get("athleteClass"))
+        athlete_class = SportsmanClassModel.objects.get(
+            name=result_data.get("athleteClass")
+        )
         sport_class: str = athlete_class.name
         subscribe_emoji = athlete_class.subscribe_emoji
 
@@ -198,7 +200,7 @@ class StageGGPHandeler:
         for sub in subscribers:
             message = f"🆕 Новый результат в Этапе: {stage.title}:\n\n"
             message += f"{subscribe_emoji} [{sport_class}]: {athlete.first_name} {athlete.last_name}\n"
-            message += f"Время: {result_data['resultTime']} секунд [{result_data['percent']} %]\n"
+            message += f"Время: {result_data['resultTime']} [{result_data['percent']} %]\n"
             message += f"Мотоцикл: {result_data.get('motorcycle', '---')}\n"
             message += f"Видео: {result_data.get('video', '')}\n"
             notify_user_telegram_message(sub, message)
@@ -216,8 +218,10 @@ class StageGGPHandeler:
         new_time: float,
     ) -> None:
         """Обновление существующего результата."""
-        old_time = existing_result.result_time_seconds
-        time_diff = old_time - new_time
+        old_time_secconds = existing_result.result_time_seconds
+        old_time = existing_result.result_time
+        time_diff = old_time_secconds - new_time
+
         existing_result.result_time_seconds = new_time
         existing_result.result_time = result_data["resultTime"]
         existing_result.place = result_data.get("place", existing_result.place)
@@ -225,7 +229,9 @@ class StageGGPHandeler:
         existing_result.video = result_data.get("video", existing_result.video)
         existing_result.save()
 
-        athlete_class = SportsmanClassModel.objects.get(name=result_data.get("athleteClass"))
+        athlete_class = SportsmanClassModel.objects.get(
+            name=result_data.get("athleteClass")
+        )
         sport_class: str = athlete_class.name
         subscribe_emoji = athlete_class.subscribe_emoji
 
@@ -235,10 +241,8 @@ class StageGGPHandeler:
                 f"⚡ Улучшение результата в Этапе: {existing_result.stage.title}:\n\n"
             )
             message += f"{subscribe_emoji} [{sport_class}]: {existing_result.user.first_name} {existing_result.user.last_name}\n"
-            message += f"Старое время: {old_time / 1000:.2f} \n"
-            message += (
-                f"Время: {result_data['resultTime']} [{result_data['percent']}%] (⬆️{time_diff / 1000:.2f})\n"
-            )
+            message += f"Старое время: {old_time} \n"
+            message += f"Время: {result_data['resultTime']} [{result_data['percent']}%] (⬆️{time_diff / 1000:.2f})\n"
             message += f"Мотоцикл: {result_data.get('motorcycle', '---')}\n"
             message += f"Видео: {result_data.get('video', '')}\n"
             notify_user_telegram_message(sub, message)
