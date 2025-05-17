@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
-DEBUG = os.environ.get("DJANGO_DEBUG", default="False")
+DEBUG = True if os.environ.get("DJANGO_DEBUG") else False
 SITE_ID = os.environ.get("DJANGO_SITE_ID")
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(",")
 CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS").split(",")
@@ -153,15 +153,16 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_BOT_TOKEN").split(":")[0]
 
 # Provider specific settings
 SOCIALACCOUNT_PROVIDERS = {
     "telegram": {
         "SCOPE": ["photo_url"],
         "APP": {
-            "client_id": os.getenv("OAUTH_TELEGRAM_CLIENT_ID"),
-            "secret": os.getenv("OAUTH_TELEGRAM_SECRET"),
+            "client_id": TELEGRAM_CHAT_ID,
+            "secret": TELEGRAM_BOT_TOKEN,
         },
         "AUTH_PARAMS": {"auth_date_validity": 30},
     },
@@ -178,7 +179,6 @@ ACCOUNT_DEFAULT_HTTP_PROTOCOL = (
     "https"  # Указываем allauth использовать HTTPS для redirect_uri
 )
 
-TELEGRAM_BOT_TOKEN = os.environ.get("OAUTH_TELEGRAM_SECRET")
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"  # Временно для разработки
 
 # Celery Configuration Options
