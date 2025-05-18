@@ -18,12 +18,17 @@ class ChampionshipModelAdmin(admin.ModelAdmin):
 
 @admin.register(StageModel)
 class StageModelAdmin(admin.ModelAdmin):
-    list_display = ("id", "stage_id", "championship", "status", "title", "stage_class")
+    list_display = ("stage_id", "championship", "status", "title", "stage_class")
+    list_filter = ("status", "championship")
+    ordering = ("championship", "-stage_id")
+    list_per_page = 30
 
 
 @admin.register(MotorcycleModel)
 class MotorcycleModelAdmin(admin.ModelAdmin):
-    list_display = ("id", "title")
+    list_display = ("title",)
+    ordering = ("title",)
+    list_per_page = 50
 
 
 @admin.register(AthleteModel)
@@ -34,9 +39,8 @@ class AthleteModelAdmin(admin.ModelAdmin):
 @admin.register(StageResultModel)
 class StageResultModelAdmin(admin.ModelAdmin):
     list_display = (
-        "stage",
         "user",
-        "motorcycle",
+        "stage",
         "date",
         "place",
         "fine",
