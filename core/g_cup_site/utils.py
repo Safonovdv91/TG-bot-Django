@@ -30,8 +30,8 @@ User = get_user_model()
 
 
 class TypeChampionship(EnumType):
-    GP = "gp"
-    CUP = "cup"
+    GGP = "gp"
+    BASE = "base"
 
 
 class APIGetter:
@@ -41,7 +41,7 @@ class APIGetter:
 
     def get_data_championships(
         self,
-        champ_type: TypeChampionship = "gp",
+        champ_type: TypeChampionship,
         from_year: int | None = None,
         to_year: int | None = None,
     ):
@@ -61,7 +61,7 @@ class APIGetter:
             return {}
 
     def get_data_championships_by_id(
-        self, champ_id: int, champ_type: TypeChampionship = "gp"
+        self, champ_id: int, champ_type: TypeChampionship = TypeChampionship.GGP.title
     ):
         url = f"{self.url}/championships/get"
         response = httpx.get(
@@ -78,9 +78,7 @@ class APIGetter:
         else:
             return {}
 
-    def data_stage(
-        self, stage_id: int, stage_type: TypeChampionship = "gp"
-    ) -> {dict | None}:
+    def data_stage(self, stage_id: int, stage_type: str) -> {dict | None}:
         """Получает данные по этапам чемпионата"""
         url = f"{self.url}/stages/get?id=&type="
         response = httpx.get(
@@ -107,9 +105,20 @@ class APIGetter:
         else:
             return {}
 
+    def get_athlete_data(self, athlete_id: int) -> dict | None:
+        """Получает данные по спортсмену"""
+        url = f"{self.url}/users/get"
+        response = httpx.get(url, params={"signature": self.api_key, "id": athlete_id})
+
+        if response.status_code == 200:
+            data = response.json()
+            return data
+
+        return {}
+
 
 def get_subscribers_for_class(
-    sport_class: str, competition_type: str = "ggp"
+    sport_class: str, competition_type: str = "gp"
 ) -> List[User]:
     """Получение подписчиков для указанного класса спортсменов."""
     subscriptions = Subscription.objects.filter(
@@ -165,23 +174,25 @@ class BaseHandler:
         motorcycle, _ = MotorcycleModel.objects.get_or_create(title=motorcycle_name)
         return motorcycle
 
-    @staticmethod
-    def get_or_create_athlete(athlete_data: Dict) -> AthleteModel:
+    def get_or_create_athlete(self, athlete_data: Dict) -> AthleteModel:
         country, _ = CountryModel.objects.get_or_create(
             title=athlete_data["userCountry"]
         )
         city, _ = CityModel.objects.get_or_create(
             title=athlete_data["userCity"], country=country
         )
-        athlete, _ = AthleteModel.objects.get_or_create(
-            id=athlete_data["userId"],
-            defaults={
-                "first_name": athlete_data["userFirstName"],
-                "last_name": athlete_data["userLastName"],
-                "city": city,
-                "sportsman_class": athlete_data.get("athleteClass", "N"),
-            },
-        )
+        athlete = AthleteModel.objects.filter(id=athlete_data.get("userId")).first()
+        if not athlete:
+            athlete_data = self.api.get_athlete_data(athlete_data.get("userId"))
+            athlete = AthleteModel.objects.create(
+                id=athlete_data.get("id"),
+                first_name=athlete_data.get("firstName"),
+                last_name=athlete_data.get("lastName"),
+                city=city,
+                sportsman_class=athlete_data.get("class", "N"),
+            )
+            return athlete
+
         return athlete
 
     def _send_class_notifications(
@@ -200,8 +211,8 @@ class BaseHandler:
 
         for subscriber in subscribers:
             formatted_message = (
+                f"{entity_title}\n\n"
                 f"{athlete_class.subscribe_emoji} [{sport_class}] {message}\n"
-                f"Этап: {entity_title}\n"
             )
             notify_user_telegram_message(subscriber, formatted_message)
 
@@ -220,6 +231,31 @@ class BaseHandler:
             athlete_class = athlete.sportsman_class
 
         self._send_class_notifications(athlete_class, message, entity_title)
+
+    def _update_existing_result(
+        self,
+        existing_result: BaseFigureSportsmanResultModel | StageResultModel,
+        result_data: Dict,
+        new_time: int,
+    ) -> None:
+        """Обновление существующего результата"""
+        old_time = existing_result.result_time
+        time_diff = (existing_result.result_time_seconds - new_time) / 1000
+
+        existing_result.result_time_seconds = new_time
+        existing_result.result_time = result_data["resultTime"]
+        existing_result.fine = result_data.get("fine", existing_result.fine)
+        existing_result.video = result_data.get("video", existing_result.video)
+        existing_result.save()
+
+        self._handle_improvement_notification(
+            result_data,
+            existing_result.user,
+            old_time,
+            time_diff,
+            self.entity.title,
+        )
+        self.changes["improved_result"] += 1
 
     def _handle_improvement_notification(
         self,
@@ -244,17 +280,20 @@ class BaseHandler:
 
         self._send_class_notifications(athlete_class, message, entity_title)
 
+    def _handle_no_change(self, athlete: AthleteModel) -> None:
+        """Обработка отсутствия изменений"""
+        self.changes["no_change"] += 1
+        logger.info(f"Без изменений: {athlete.full_name} в этапе {self.entity.title}")
+
 
 class StageGGPHandeler(BaseHandler):
     """Обработчик данных этапа ГПП"""
 
-    def __init__(self, stage_id: int, championship_type: str = "ggp"):
+    def __init__(self, stage_id: int, championship_type: str = "gp"):
         super().__init__()
-        self.COMPETITION_TYPE = "ggp"
+        self.COMPETITION_TYPE = championship_type
 
         self.stage_id = stage_id
-        self.championship_type = championship_type
-        self.stage = None
 
     def handle(self) -> None:
         try:
@@ -265,17 +304,17 @@ class StageGGPHandeler(BaseHandler):
 
     def _import_single_stage(self) -> None:
         """Импорт данных для одного этапа"""
-        logger.info(f"Начинаем импорт этапа: {self.championship_type}|{self.stage_id}")
+        logger.info(f"Начинаем импорт этапа: {self.COMPETITION_TYPE}|{self.stage_id}")
 
-        self.entity_data = self.api.data_stage(self.stage_id, self.championship_type)
+        self.entity_data = self.api.data_stage(self.stage_id, self.COMPETITION_TYPE)
         if not self.entity_data:
             logger.warning(
-                f"Нет данных для этапа: {self.championship_type}|{self.stage_id}"
+                f"Нет данных для этапа: {self.COMPETITION_TYPE}|{self.stage_id}"
             )
             return
 
         with transaction.atomic():
-            self.stage, _ = StageModel.objects.get_or_create(
+            self.entity, _ = StageModel.objects.get_or_create(
                 stage_id=self.entity_data["id"]
             )
             self._process_results()
@@ -294,7 +333,7 @@ class StageGGPHandeler(BaseHandler):
 
         athlete = self.get_or_create_athlete(result_data)
         existing_result = StageResultModel.objects.filter(
-            stage=self.stage, user=athlete
+            stage=self.entity, user=athlete
         ).first()
 
         if not existing_result:
@@ -308,7 +347,7 @@ class StageGGPHandeler(BaseHandler):
         """Создание нового результата этапа"""
         motorcycle = self.get_or_create_motorcycle(result_data["motorcycle"])
         StageResultModel.objects.create(
-            stage=self.stage,
+            stage=self.entity,
             user=athlete,
             motorcycle=motorcycle,
             date=self.parse_unix_time(result_data["date"]),
@@ -318,32 +357,8 @@ class StageGGPHandeler(BaseHandler):
             result_time=result_data["resultTime"],
             video=result_data.get("video"),
         )
-        self._handle_creation_notification(result_data, athlete, self.stage.title)
+        self._handle_creation_notification(result_data, athlete, self.entity.title)
         self.changes["new_result"] += 1
-
-    def _update_existing_result(
-        self, existing_result: StageResultModel, result_data: Dict, new_time: float
-    ) -> None:
-        """Обновление существующего результата"""
-        old_time = existing_result.result_time
-        time_diff = (existing_result.result_time_seconds - new_time) / 1000
-
-        existing_result.result_time_seconds = new_time
-        existing_result.result_time = result_data["resultTime"]
-        existing_result.place = result_data.get("place", existing_result.place)
-        existing_result.fine = result_data.get("fine", existing_result.fine)
-        existing_result.video = result_data.get("video", existing_result.video)
-        existing_result.save()
-
-        self._handle_improvement_notification(
-            result_data, existing_result.user, old_time, time_diff, self.stage.title
-        )
-        self.changes["improved_result"] += 1
-
-    def _handle_no_change(self, athlete: AthleteModel) -> None:
-        """Обработка отсутствия изменений"""
-        self.changes["no_change"] += 1
-        logger.info(f"Без изменений: {athlete.full_name} в этапе {self.stage.title}")
 
     def _log_import_results(self) -> None:
         """Логирование результатов импорта"""
@@ -359,10 +374,9 @@ class BaseFigureHandler(BaseHandler):
 
     def __init__(self, figure_id: int):
         super().__init__()
-        self.COMPETITION_TYPE = "base"
-
         self.figure_id = figure_id
         self.figure = self._get_or_create_figure()
+        self.COMPETITION_TYPE = "base"
 
     def handle(self) -> None:
         try:
@@ -373,9 +387,9 @@ class BaseFigureHandler(BaseHandler):
 
     def _get_or_create_figure(self) -> BaseFigureModel:
         """Получение или создание базовой фигуры"""
-        figure = BaseFigureModel.objects.filter(id=self.figure_id).first()
-        if figure:
-            return figure
+        self.entity = BaseFigureModel.objects.filter(id=self.figure_id).first()
+        if self.entity:
+            return self.entity
 
         figure_data = self.api.get_figure_data(self.figure_id)
         if not figure_data:
@@ -412,9 +426,16 @@ class BaseFigureHandler(BaseHandler):
 
         if not existing_result:
             self._create_new_figure_result(best_result, athlete)
+        elif best_result.get("timeSeconds") < existing_result.result_time_seconds:
+            self._update_existing_result(
+                existing_result, result_data.get("best"), best_result.get("timeSeconds")
+            )
+        else:
+            self._handle_no_change(athlete)
 
     def _prepare_athlete_data(self, result_data: Dict) -> AthleteModel:
         """Подготовка данных спортсмена"""
+
         athlete_data = {
             "userId": result_data["userId"],
             "userFirstName": result_data["userFirstName"],
