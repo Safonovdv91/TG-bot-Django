@@ -6,6 +6,8 @@ from .models import (
     MotorcycleModel,
     AthleteModel,
     StageResultModel,
+    BaseFigureModel,
+    BaseFigureSportsmanResultModel,
 )
 
 
@@ -37,6 +39,26 @@ class StageResultModelAdmin(admin.ModelAdmin):
         "motorcycle",
         "date",
         "place",
+        "fine",
+        "result_time_seconds",
+        "result_time",
+        "video",
+    )
+
+
+@admin.register(BaseFigureModel)
+class BaseFigureModelAdmin(admin.ModelAdmin):
+    list_display = ("id", "title", "description", "track", "with_in_class")
+
+
+@admin.register(BaseFigureSportsmanResultModel)
+class BaseFigureSportsmanResultModelAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "base_figure",
+        "user",
+        "motorcycle",
+        "date",
         "fine",
         "result_time_seconds",
         "result_time",
