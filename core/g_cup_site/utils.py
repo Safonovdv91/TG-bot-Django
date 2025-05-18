@@ -108,10 +108,13 @@ class APIGetter:
             return {}
 
 
-def get_subscribers_for_class(sport_class: str) -> List[User]:
+def get_subscribers_for_class(
+    sport_class: str, competition_type: str = "ggp"
+) -> List[User]:
     """Получение подписчиков для указанного класса спортсменов."""
     subscriptions = Subscription.objects.filter(
         sportsman_class__name=sport_class,
+        competition_type__name=competition_type,
     ).select_related("user_subscription__user", "sportsman_class", "competition_type")
     users_subscribed = [sub.user_subscription.user for sub in subscriptions]
 
@@ -145,6 +148,7 @@ class BaseHandler:
         }
         self.entity = None
         self.entity_data = None
+        self.COMPETITION_TYPE = None
 
     def handle(self) -> None:
         raise NotImplementedError
@@ -187,8 +191,12 @@ class BaseHandler:
         if not sport_class:
             raise ValueError("Класс спортсменов не указан")
 
-        subscribers = get_subscribers_for_class(sport_class)
-        athlete_class = SportsmanClassModel.objects.get(name=sport_class)
+        subscribers = get_subscribers_for_class(
+            sport_class, competition_type=self.COMPETITION_TYPE
+        )
+        athlete_class = SportsmanClassModel.objects.get(
+            name=sport_class,
+        )
 
         for subscriber in subscribers:
             formatted_message = (
@@ -242,6 +250,8 @@ class StageGGPHandeler(BaseHandler):
 
     def __init__(self, stage_id: int, championship_type: str = "ggp"):
         super().__init__()
+        self.COMPETITION_TYPE = "ggp"
+
         self.stage_id = stage_id
         self.championship_type = championship_type
         self.stage = None
@@ -349,6 +359,8 @@ class BaseFigureHandler(BaseHandler):
 
     def __init__(self, figure_id: int):
         super().__init__()
+        self.COMPETITION_TYPE = "base"
+
         self.figure_id = figure_id
         self.figure = self._get_or_create_figure()
 
