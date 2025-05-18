@@ -208,14 +208,52 @@ class StageResultModel(models.Model):
         verbose_name = "Результат этапа"
         verbose_name_plural = "Результаты этапов"
         ordering = ["-date"]
-        # constraints = [
-        #     models.UniqueConstraint(
-        #         fields=["stage", "user"], name="unique_stage_athlete"
-        #     ),
-        #     models.UniqueConstraint(
-        #         fields=["stage", "place"], name="unique_stage_place"
-        #     ),
-        # ]
 
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name} на {self.stage.title} {self.place} место"
+
+
+class BaseFigureModel(models.Model):
+    """Модель базовых фигур на сайте"""
+
+    id = models.IntegerField(primary_key=True, verbose_name="ID фигуры на сайте")
+    title = models.CharField(max_length=255, verbose_name="Название фигуры")
+    description = models.TextField(verbose_name="Описание фигуры")
+    track = models.URLField(max_length=500, verbose_name="Фото фигуры")
+    with_in_class = models.BooleanField(verbose_name="Производится ли повышение класса")
+
+    class Meta:
+        verbose_name = "Базовая фигура"
+        verbose_name_plural = "Базовые фигуры"
+        ordering = ["-id"]
+
+
+class BaseFigureSportsmanResultModel(models.Model):
+    base_figure = models.ForeignKey(
+        BaseFigureModel,
+        on_delete=models.CASCADE,
+        related_name="results_base_figure",
+        verbose_name="Базовая фигура",
+    )
+    user = models.ForeignKey(
+        AthleteModel,
+        on_delete=models.CASCADE,
+        verbose_name="Спортсмен",
+        related_name="results_base_figure",
+    )
+    motorcycle = models.ForeignKey(
+        MotorcycleModel,
+        on_delete=models.CASCADE,
+        verbose_name="Мотоцикл",
+        related_name="results_base_figure",
+    )
+    date = models.DateTimeField(verbose_name="Дата заезда")
+    fine = models.IntegerField(verbose_name="Штраф", blank=True, null=True)
+    result_time_seconds = models.IntegerField(verbose_name="Итоговое время (мс)")
+    result_time = models.CharField(max_length=20, verbose_name="Итоговое время")
+    video = models.URLField(max_length=500, blank=True, null=True, verbose_name="Видео")
+
+    class Meta:
+        verbose_name = "Результат проезда базовой фигуры"
+        verbose_name_plural = "Результаты проездов базовых фигур"
+        ordering = ["-date"]
