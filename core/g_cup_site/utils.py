@@ -313,11 +313,10 @@ class StageGGPHandeler(BaseHandler):
             )
             return
 
-        with transaction.atomic():
-            self.entity, _ = StageModel.objects.get_or_create(
-                stage_id=self.entity_data["id"]
-            )
-            self._process_results()
+        self.entity, _ = StageModel.objects.get_or_create(
+            stage_id=self.entity_data["id"]
+        )
+        self._process_results()
 
     def _process_results(self) -> None:
         """Обработка всех результатов этапа"""
@@ -409,9 +408,8 @@ class BaseFigureHandler(BaseHandler):
         logger.info(f"Начинаем импорт фигуры {self.figure.title}")
         figure_data = self.api.get_figure_data(self.figure.id)
 
-        with transaction.atomic():
-            for result_data in figure_data.get("results", []):
-                self._process_single_result(result_data)
+        for result_data in figure_data.get("results", []):
+            self._process_single_result(result_data)
 
     def _process_single_result(self, result_data: Dict) -> None:
         """Обработка одного результата фигуры"""
