@@ -28,6 +28,49 @@ class KeyboardActionHandler(ABC):
     async def handle(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         pass
 
+    @staticmethod
+    async def get_keyboard(subscribed_classes) -> typing.List[typing.List[str]]:
+        """Функция для создания клавиатуры, получает все подписки пользователя и формирует клавиатуру"""
+        try:
+            # Попытка использовать нативный async (Django 5.0+)
+            classes = await SportsmanClassModel.objects.all().alist()
+        except AttributeError:
+            # #todo какой-то костыльный вариант
+            classes = await sync_to_async(list)(SportsmanClassModel.objects.all())
+        # Формируем клавиатуру
+        keyboard = []
+        row = []
+        for i, cls in enumerate(classes, 1):
+            prefix = cls.subscribe_emoji if cls.name in subscribed_classes else "🔲"
+            row.append(f"{prefix} {cls.name}")
+            if i % 3 == 0 or i == len(classes):
+                keyboard.append(row)
+                row = []
+
+        return keyboard
+
+    async def _get_user_subscribed_classes(
+        self, user_subscription: UserSubscription, competition_type
+    ):
+        return [
+            sc.name
+            async for sc in SportsmanClassModel.objects.filter(
+                subscription__user_subscription=user_subscription,
+                subscription__competition_type_id=competition_type,
+            ).all()
+        ]
+
+    async def _handle_back(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> States:
+        from telegram_bot.manager import KeyboardManager
+
+        keyboard_manager = KeyboardManager()
+        await update.message.reply_text(
+            "Главное меню:", reply_markup=keyboard_manager.get_main_keyboard()
+        )
+        return States.MAIN_MENU
+
 
 class SendTrackHandler(KeyboardActionHandler):
     """Обработчик для отправки трека"""
@@ -59,7 +102,49 @@ class SendTrackHandler(KeyboardActionHandler):
         return States.MAIN_MENU
 
 
+class BaseClassKeyboardHandler(KeyboardActionHandler):
+    def __init__(self):
+        self.competition_type = 2
+
+    @property
+    def button_text(self) -> str:
+        return "📝 Подписаться на Базовые фигуры"
+
+    async def handle(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None | States:
+        user = update.effective_user
+        social_account = await SocialAccount.objects.filter(uid=str(user.id)).afirst()
+
+        if not social_account:
+            await update.message.reply_text("Сначала зарегистрируйтесь через /start")
+            return States.MAIN_MENU
+
+        subscription, _ = await UserSubscription.objects.aget_or_create(
+            user=social_account.user,
+            defaults={
+                "is_active": True,
+                "source": "telegram",
+            },
+        )
+        # Получаем текущие подписки пользователя
+        subscribed_classes = await self._get_user_subscribed_classes(
+            subscription, competition_type=self.competition_type
+        )
+        keyboard = await self.get_keyboard(subscribed_classes)
+        keyboard.append(["🔙 Назад"])
+        await update.message.reply_text(
+            "Выберите класс спортсмена:",
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+        )
+        context.user_data["subscription_id"] = subscription.id
+        return States.BASE_CLASS_SELECTION
+
+
 class SubscriptionKeyboardHandler(KeyboardActionHandler):
+    def __init__(self):
+        self.competition_type = 1
+
     @property
     def button_text(self) -> str:
         return "📝 Подписаться на GGP классы"
@@ -82,12 +167,11 @@ class SubscriptionKeyboardHandler(KeyboardActionHandler):
             },
         )
         # Получаем текущие подписки пользователя
-        subscribed_classes = await self._get_user_subscribed_classes(subscription)
-
+        subscribed_classes = await self._get_user_subscribed_classes(
+            subscription, competition_type=self.competition_type
+        )
         keyboard = await self.get_keyboard(subscribed_classes)
-
         keyboard.append(["🔙 Назад"])
-
         await update.message.reply_text(
             "Выберите класс спортсмена:",
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
@@ -95,36 +179,6 @@ class SubscriptionKeyboardHandler(KeyboardActionHandler):
 
         context.user_data["subscription_id"] = subscription.id
         return States.CLASS_SELECTION
-
-    async def _get_user_subscribed_classes(self, subscription):
-        return [
-            sc.name
-            async for sc in SportsmanClassModel.objects.filter(
-                subscription__user_subscription=subscription
-            ).all()
-        ]
-
-    @staticmethod
-    async def get_keyboard(subscribed_classes) -> typing.List[typing.List[str]]:
-        """Функция для создания клавиатуры, получает все подписки пользователя и формирует клавиатуру"""
-        """Асинхронная версия с fallback для старых Django."""
-        try:
-            # Попытка использовать нативный async (Django 5.0+)
-            classes = await SportsmanClassModel.objects.all().alist()
-        except AttributeError:
-            # #todo какой-то костыльный вариант
-            classes = await sync_to_async(list)(SportsmanClassModel.objects.all())
-        # Формируем клавиатуру
-        keyboard = []
-        row = []
-        for i, cls in enumerate(classes, 1):
-            prefix = cls.subscribe_emoji if cls.name in subscribed_classes else "🔲"
-            row.append(f"{prefix} {cls.name}")
-            if i % 3 == 0 or i == len(classes):
-                keyboard.append(row)
-                row = []
-
-        return keyboard
 
 
 class ClassSelectionHandler(KeyboardActionHandler):
@@ -165,9 +219,9 @@ class ClassSelectionHandler(KeyboardActionHandler):
                             sportsman_class=sportsman_class,
                         ).adelete()
                     else:
-                        default_competition = (
-                            await CompetitionTypeModel.objects.afirst()
-                        )
+                        default_competition = await CompetitionTypeModel.objects.filter(
+                            name="ggp"
+                        ).afirst()
                         await Subscription.objects.acreate(
                             user_subscription=subscription,
                             sportsman_class=sportsman_class,
@@ -178,7 +232,9 @@ class ClassSelectionHandler(KeyboardActionHandler):
                 await update.message.reply_text("⚠️ Ошибка при изменении подписки")
                 return States.CLASS_SELECTION
 
-            subscribed_classes = await self._get_user_subscribed_classes(subscription)
+            subscribed_classes = await self._get_user_subscribed_classes(
+                subscription, competition_type=1
+            )
             keyboard = await SubscriptionKeyboardHandler.get_keyboard(
                 subscribed_classes
             )
@@ -201,21 +257,78 @@ class ClassSelectionHandler(KeyboardActionHandler):
             await update.message.reply_text("⚠️ Произошла ошибка")
             return States.MAIN_MENU
 
-    async def _handle_back(
+
+class BaseClassSelectionHandler(KeyboardActionHandler):
+    @property
+    def button_text(self) -> str:
+        return ""
+
+    async def handle(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> States:
-        from telegram_bot.manager import KeyboardManager
+    ) -> None | States:
+        text = update.message.text
+        if text == "🔙 Назад":
+            return await self._handle_back(update, context)
 
-        keyboard_manager = KeyboardManager()
-        await update.message.reply_text(
-            "Главное меню:", reply_markup=keyboard_manager.get_main_keyboard()
-        )
-        return States.MAIN_MENU
+        class_name = text[2:].strip()  # Извлекаем "A" из "🟩 A"
+        subscription_id = context.user_data.get("subscription_id")
 
-    async def _get_user_subscribed_classes(self, subscription):
-        return [
-            sc.name
-            async for sc in SportsmanClassModel.objects.filter(
-                subscription__user_subscription=subscription
-            ).all()
-        ]
+        if not subscription_id:
+            await update.message.reply_text("Ошибка сессии. Начните с /start")
+            return States.MAIN_MENU
+
+        try:
+            sportsman_class = await SportsmanClassModel.objects.aget(name=class_name)
+            subscription = await UserSubscription.objects.aget(pk=subscription_id)
+
+            from django.db import transaction
+
+            try:
+                with transaction.atomic():
+                    is_subscribed = await Subscription.objects.filter(
+                        user_subscription=subscription,
+                        sportsman_class=sportsman_class,
+                        competition_type=2,
+                    ).aexists()
+
+                    if is_subscribed:
+                        await Subscription.objects.filter(
+                            user_subscription=subscription,
+                            sportsman_class=sportsman_class,
+                        ).adelete()
+                    else:
+                        default_competition = await CompetitionTypeModel.objects.filter(
+                            name="base"
+                        ).afirst()
+                        await Subscription.objects.acreate(
+                            user_subscription=subscription,
+                            sportsman_class=sportsman_class,
+                            competition_type=default_competition,
+                        )
+            except Exception as e:
+                logger.error(f"Ошибка транзакции: {str(e)}")
+                await update.message.reply_text("⚠️ Ошибка при изменении подписки")
+                return States.BASE_CLASS_SELECTION
+
+            subscribed_classes = await self._get_user_subscribed_classes(
+                subscription, competition_type=2
+            )
+            keyboard = await BaseClassKeyboardHandler.get_keyboard(subscribed_classes)
+
+            keyboard.append(["🔙 Назад"])
+
+            action = "подписаны на" if not is_subscribed else "отписаны от"
+            await update.message.reply_text(
+                f"Вы {action} на базовый класс {class_name}",
+                reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+            )
+
+            return States.BASE_CLASS_SELECTION
+
+        except SportsmanClassModel.DoesNotExist:
+            await update.message.reply_text("Неизвестный класс")
+            return States.BASE_CLASS_SELECTION
+        except Exception as e:
+            logger.error(f"Ошибка в ClassSelectionHandler: {str(e)}")
+            await update.message.reply_text("⚠️ Произошла ошибка")
+            return States.MAIN_MENU

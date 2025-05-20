@@ -8,6 +8,8 @@ from telegram_bot.keyboard import (
     KeyboardActionHandler,
     SubscriptionKeyboardHandler,
     ClassSelectionHandler,
+    BaseClassSelectionHandler,
+    BaseClassKeyboardHandler,
 )
 from telegram_bot.states import States
 from telegram_bot.utils.users import create_user_from_telegram
@@ -25,9 +27,11 @@ class KeyboardManager:
         # Главное меню
         self.add_handler(SendTrackHandler())
         self.add_handler(SubscriptionKeyboardHandler())
+        self.add_handler(BaseClassKeyboardHandler())
 
         # Меню выбора класса
         self.add_class_selection_handler(ClassSelectionHandler())
+        self.add_class_selection_handler(BaseClassSelectionHandler())
 
     def add_handler(self, handler: KeyboardActionHandler) -> None:
         self._handlers[handler.button_text] = handler
@@ -56,6 +60,8 @@ class KeyboardManager:
             handler = self._handlers.get(text)
         elif current_state == States.CLASS_SELECTION:
             handler = self._class_selection_handlers.get("ClassSelectionHandler")
+        elif current_state == States.BASE_CLASS_SELECTION:
+            handler = self._class_selection_handlers.get("BaseClassSelectionHandler")
 
         if handler:
             new_state = await handler.handle(update, context)

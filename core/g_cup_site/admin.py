@@ -6,6 +6,8 @@ from .models import (
     MotorcycleModel,
     AthleteModel,
     StageResultModel,
+    BaseFigureModel,
+    BaseFigureSportsmanResultModel,
 )
 
 
@@ -16,12 +18,17 @@ class ChampionshipModelAdmin(admin.ModelAdmin):
 
 @admin.register(StageModel)
 class StageModelAdmin(admin.ModelAdmin):
-    list_display = ("id", "stage_id", "championship", "status", "title", "stage_class")
+    list_display = ("stage_id", "championship", "status", "title", "stage_class")
+    list_filter = ("status", "championship")
+    ordering = ("championship", "-stage_id")
+    list_per_page = 30
 
 
 @admin.register(MotorcycleModel)
 class MotorcycleModelAdmin(admin.ModelAdmin):
-    list_display = ("id", "title")
+    list_display = ("title",)
+    ordering = ("title",)
+    list_per_page = 50
 
 
 @admin.register(AthleteModel)
@@ -32,11 +39,30 @@ class AthleteModelAdmin(admin.ModelAdmin):
 @admin.register(StageResultModel)
 class StageResultModelAdmin(admin.ModelAdmin):
     list_display = (
+        "user",
         "stage",
+        "date",
+        "place",
+        "fine",
+        "result_time_seconds",
+        "result_time",
+        "video",
+    )
+
+
+@admin.register(BaseFigureModel)
+class BaseFigureModelAdmin(admin.ModelAdmin):
+    list_display = ("id", "title", "description", "track", "with_in_class")
+
+
+@admin.register(BaseFigureSportsmanResultModel)
+class BaseFigureSportsmanResultModelAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "base_figure",
         "user",
         "motorcycle",
         "date",
-        "place",
         "fine",
         "result_time_seconds",
         "result_time",
