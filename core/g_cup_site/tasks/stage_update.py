@@ -1,6 +1,5 @@
 import logging
 
-from django.db import transaction
 
 from core import celery_app
 from g_cup_site.models import AthleteModel
@@ -21,6 +20,7 @@ def base_figure_update(figure_id: int):
     """Получение результатов для базовой фигуры."""
     stage_results = BaseFigureHandler(figure_id)
     stage_results.handle()
+
 
 @celery_app.task
 def update_all_athletes_info():

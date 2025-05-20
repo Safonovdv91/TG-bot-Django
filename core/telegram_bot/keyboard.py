@@ -219,7 +219,9 @@ class ClassSelectionHandler(KeyboardActionHandler):
                             sportsman_class=sportsman_class,
                         ).adelete()
                     else:
-                        default_competition = await CompetitionTypeModel.objects.filter(name="ggp").afirst()
+                        default_competition = await CompetitionTypeModel.objects.filter(
+                            name="ggp"
+                        ).afirst()
                         await Subscription.objects.acreate(
                             user_subscription=subscription,
                             sportsman_class=sportsman_class,
@@ -295,7 +297,9 @@ class BaseClassSelectionHandler(KeyboardActionHandler):
                             sportsman_class=sportsman_class,
                         ).adelete()
                     else:
-                        default_competition = await CompetitionTypeModel.objects.filter(name="base").afirst()
+                        default_competition = await CompetitionTypeModel.objects.filter(
+                            name="base"
+                        ).afirst()
                         await Subscription.objects.acreate(
                             user_subscription=subscription,
                             sportsman_class=sportsman_class,
