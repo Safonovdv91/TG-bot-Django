@@ -22,7 +22,7 @@ def base_figure_update(figure_id: int):
     stage_results = BaseFigureHandler(figure_id)
     stage_results.handle()
 
-
+@celery_app.task
 def update_all_athletes_info():
     api = APIGetter()
     count = 0
