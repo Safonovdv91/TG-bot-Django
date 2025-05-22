@@ -41,12 +41,6 @@ class Command(BaseCommand):
             help="ID этапа",
         )
         parser.add_argument(
-            "--championship-type",
-            type=str,
-            default="gp",
-            help="Тип чемпионата (gp, offline, online)",
-        )
-        parser.add_argument(
             "--verbose",
             action="store_true",
             help="Подробный вывод информации",
@@ -55,12 +49,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.verbose = options["verbose"]
         stage_id = options["stage_id"]
-        championship_type = options["championship_type"]
         if not stage_id:
             raise CommandError("--stage-id обязательный параметр")
 
         try:
-            stage_results = StageGGPHandeler(stage_id, championship_type)
+            stage_results = StageGGPHandeler(stage_id)
             stage_results.handle()
             print(stage_results)
 

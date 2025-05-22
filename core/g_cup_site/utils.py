@@ -288,10 +288,9 @@ class BaseHandler:
 class StageGGPHandeler(BaseHandler):
     """Обработчик данных этапа ГПП"""
 
-    def __init__(self, stage_id: int, championship_type: str = "gp"):
+    def __init__(self, stage_id: int):
         super().__init__()
-        self.COMPETITION_TYPE = championship_type
-
+        self.COMPETITION_TYPE = "ggp"
         self.stage_id = stage_id
 
     def handle(self) -> None:
@@ -305,7 +304,7 @@ class StageGGPHandeler(BaseHandler):
         """Импорт данных для одного этапа"""
         logger.info(f"Начинаем импорт этапа: {self.COMPETITION_TYPE}|{self.stage_id}")
 
-        self.entity_data = self.api.data_stage(self.stage_id, self.COMPETITION_TYPE)
+        self.entity_data = self.api.data_stage(self.stage_id, "gp")
         if not self.entity_data:
             logger.warning(
                 f"Нет данных для этапа: {self.COMPETITION_TYPE}|{self.stage_id}"
