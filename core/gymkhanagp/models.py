@@ -36,7 +36,7 @@ class SportsmanClassModel(models.Model):
 
 
 class UserSubscription(models.Model):
-    user = models.OneToOneField(
+    user: User = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="subscriptions"
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата подписки")
@@ -63,7 +63,7 @@ class UserSubscription(models.Model):
         verbose_name_plural = "Подписки"
 
     def __str__(self):
-        return f"{self.user.username}"
+        return f"{self.user}"
 
 
 class Subscription(models.Model):
