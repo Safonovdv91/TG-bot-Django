@@ -4,12 +4,12 @@ from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 from telegram_bot.keyboard import (
-    SendTrackHandler,
-    KeyboardActionHandler,
-    SubscriptionKeyboardHandler,
-    ClassSelectionHandler,
-    BaseClassSelectionHandler,
-    BaseClassKeyboardHandler,
+    TrackHandler,
+    BaseHandler,
+    GGPSubscriptionHandler,
+    GGPSelectionHandler,
+    BaseFigureSubscriptionHandler,
+    BaseFigureSelectionHandler,
 )
 from telegram_bot.states import States
 from telegram_bot.utils.users import create_user_from_telegram
@@ -25,18 +25,18 @@ class KeyboardManager:
 
     def _register_handlers(self) -> None:
         # Главное меню
-        self.add_handler(SendTrackHandler())
-        self.add_handler(SubscriptionKeyboardHandler())
-        self.add_handler(BaseClassKeyboardHandler())
+        self.add_handler(TrackHandler())
+        self.add_handler(GGPSubscriptionHandler())
+        self.add_handler(BaseFigureSubscriptionHandler())
 
         # Меню выбора класса
-        self.add_class_selection_handler(ClassSelectionHandler())
-        self.add_class_selection_handler(BaseClassSelectionHandler())
+        self.add_class_selection_handler(GGPSelectionHandler())
+        self.add_class_selection_handler(BaseFigureSelectionHandler())
 
-    def add_handler(self, handler: KeyboardActionHandler) -> None:
+    def add_handler(self, handler: BaseHandler) -> None:
         self._handlers[handler.button_text] = handler
 
-    def add_class_selection_handler(self, handler: KeyboardActionHandler):
+    def add_class_selection_handler(self, handler: BaseHandler):
         self._class_selection_handlers[handler.__class__.__name__] = handler
 
     def get_main_keyboard(self) -> ReplyKeyboardMarkup:
@@ -59,9 +59,9 @@ class KeyboardManager:
         if current_state == States.MAIN_MENU:
             handler = self._handlers.get(text)
         elif current_state == States.CLASS_SELECTION:
-            handler = self._class_selection_handlers.get("ClassSelectionHandler")
+            handler = self._class_selection_handlers.get("GGPSelectionHandler")
         elif current_state == States.BASE_CLASS_SELECTION:
-            handler = self._class_selection_handlers.get("BaseClassSelectionHandler")
+            handler = self._class_selection_handlers.get("BaseFigureSelectionHandler")
 
         if handler:
             new_state = await handler.handle(update, context)
