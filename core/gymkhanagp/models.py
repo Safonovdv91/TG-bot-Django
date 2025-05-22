@@ -17,6 +17,8 @@ class CompetitionTypeModel(models.Model):
     def __str__(self):
         return f"{self.name} - {self.description}"
 
+    objects = models.Manager()
+
 
 class SportsmanClassModel(models.Model):
     name = models.CharField(max_length=2, unique=True, verbose_name="Класс спортсмена")
@@ -33,6 +35,8 @@ class SportsmanClassModel(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.description}"
+
+    objects = models.Manager()
 
 
 class UserSubscription(models.Model):
@@ -65,6 +69,8 @@ class UserSubscription(models.Model):
     def __str__(self):
         return f"{self.user}"
 
+    objects = models.Manager()
+
 
 class Subscription(models.Model):
     user_subscription = models.ForeignKey(UserSubscription, on_delete=models.CASCADE)
@@ -81,3 +87,5 @@ class Subscription(models.Model):
 
     def __str__(self):
         return f"{self.user_subscription.user.username} - {self.competition_type.name} - {self.sportsman_class.name}"
+
+    objects = models.Manager()

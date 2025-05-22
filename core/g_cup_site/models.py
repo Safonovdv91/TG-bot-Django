@@ -106,6 +106,8 @@ class StageModel(models.Model):
     def description_display(self):
         return mark_safe(self.championship.description)
 
+    objects = models.Manager()
+
 
 class MotorcycleModel(models.Model):
     """Модель мотоциклов"""
@@ -118,7 +120,6 @@ class MotorcycleModel(models.Model):
 
     def __str__(self):
         return f"{self.title}"
-
 
 
 class CountryModel(models.Model):
