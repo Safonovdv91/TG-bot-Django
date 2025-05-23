@@ -7,7 +7,7 @@ from asgiref.sync import sync_to_async
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ContextTypes
 
-from g_cup_site.models import StageModel
+from g_cup_site.models import StageModel, StageResultModel
 from gymkhanagp.models import (
     UserSubscription,
     SportsmanClassModel,
@@ -15,6 +15,12 @@ from gymkhanagp.models import (
     CompetitionTypeModel,
 )
 from telegram_bot.states import States
+from telegram_bot.utils.math_calculate import (
+    ClassCoefficientManager,
+    StageService,
+    TimeConverter,
+)
+from telegram_bot.utils.messages import MessageTimeTableFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +147,62 @@ class TrackHandler(BaseHandler):
             await update.message.reply_text("Нет активных соревнований")
 
         return States.MAIN_MENU
+
+
+class TimeTableGGPHandler(BaseHandler):
+    """Обработчик для предоставления временных диапазонов этапа"""
+
+    def __init__(
+        self,
+    ):
+        self.stage_service = StageService()
+        self.coefficient_manager = ClassCoefficientManager()
+        self.message_formatter = MessageTimeTableFormatter(TimeConverter())
+
+    @property
+    def button_text(self) -> str:
+        return "Получить 🕗 этапа"
+
+    async def handle(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> States:
+        """Основная логика обработки запроса"""
+        try:
+            if not (active_stage := await self.stage_service.get_active_stage()):
+                await update.message.reply_text("🏜️ Нет активных соревнований")
+                return States.MAIN_MENU
+
+            if not (
+                best_result := await self.stage_service.get_best_result(active_stage)
+            ):
+                await update.message.reply_text("🏜️ Нет результатов для этапа 🏜️")
+                return States.MAIN_MENU
+
+            base_time = self._calculate_base_time(best_result)
+            sportsman_class: SportsmanClassModel = (
+                await SportsmanClassModel.objects.filter(
+                    name=best_result.user.sportsman_class
+                ).afirst()
+            )
+
+            message = f"Лидер: {sportsman_class.subscribe_emoji} {sportsman_class.name} - {best_result.user.full_name}\n"
+            message += f"Время: {best_result.result_time}\n"
+            message += self.message_formatter.format_time_ranges(base_time)
+
+            await update.message.reply_text(message)
+
+        except Exception as e:
+            logger.error(f"Ошибка обработки: {str(e)}")
+            await update.message.reply_text("Произошла ошибка при обработке запроса")
+
+        return States.MAIN_MENU
+
+    def _calculate_base_time(self, result: StageResultModel) -> int:
+        """Расчет базового времени с учетом коэффициента класса"""
+        coefficient = self.coefficient_manager.get_coefficient(
+            result.user.sportsman_class if result.user else None
+        )
+        return int(result.result_time_seconds / coefficient)
 
 
 class BaseSubscriptionHandler(BaseHandler, SubscriptionHandlerMixin):
