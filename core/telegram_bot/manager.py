@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 class KeyboardManager:
     def __init__(self):
-        self._handlers = {}
+        self._handlers: dict[str, BaseHandler] = {}
         self._class_selection_handlers = {}
         self._register_handlers()
 
@@ -31,25 +31,33 @@ class KeyboardManager:
         self.add_handler(GGPSubscriptionHandler())
         self.add_handler(BaseFigureSubscriptionHandler())
 
+        self.main_menu = ReplyKeyboardMarkup(
+            keyboard=[
+                [GGPSubscriptionHandler().button],
+                [BaseFigureSubscriptionHandler().button],
+                [
+                    TrackHandler().button,
+                    TimeTableGGPHandler().button,
+                ],
+            ],
+            resize_keyboard=True,
+        )
+
         # Меню выбора класса
         self.add_class_selection_handler(GGPSelectionHandler())
         self.add_class_selection_handler(BaseFigureSelectionHandler())
 
-    def add_handler(self, handler: BaseHandler) -> None:
+    def add_handler(
+        self,
+        handler: BaseHandler,
+    ) -> None:
         self._handlers[handler.button_text] = handler
 
     def add_class_selection_handler(self, handler: BaseHandler):
         self._class_selection_handlers[handler.__class__.__name__] = handler
 
     def get_main_keyboard(self) -> ReplyKeyboardMarkup:
-        buttons = [[handler.button_text] for handler in self._handlers.values()]
-        return ReplyKeyboardMarkup(buttons, resize_keyboard=True)
-
-    def get_keyboard(self) -> ReplyKeyboardMarkup:
-        buttons = [[handler.button_text] for handler in self._handlers.values()]
-        return ReplyKeyboardMarkup(
-            buttons, resize_keyboard=True, one_time_keyboard=False
-        )
+        return self.main_menu
 
     async def handle_message(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -86,10 +94,10 @@ class KeyboardManager:
         if created:
             await update.message.reply_text(
                 "🔐 Вы зарегистрированы!",
-                reply_markup=self.get_keyboard(),
+                reply_markup=self.get_main_keyboard(),
             )
         else:
             await update.message.reply_text(
                 f"Привет, {user.first_name}! Выберите действие:(кнопка подписки внизу)",
-                reply_markup=self.get_keyboard(),
+                reply_markup=self.get_main_keyboard(),
             )

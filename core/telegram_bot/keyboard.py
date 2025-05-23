@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from django.db import transaction
 from allauth.socialaccount.models import SocialAccount
 from asgiref.sync import sync_to_async
-from telegram import Update, ReplyKeyboardMarkup
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ContextTypes
 
 from g_cup_site.models import StageModel, StageResultModel
@@ -34,6 +34,11 @@ class BaseHandler(ABC):
     @property
     @abstractmethod
     def button_text(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def button(self) -> KeyboardButton:
         pass
 
     @abstractmethod
@@ -131,6 +136,10 @@ class TrackHandler(BaseHandler):
     def button_text(self) -> str:
         return "🗺️ Выслать карту GGP"
 
+    @property
+    def button(self) -> KeyboardButton:
+        return KeyboardButton(self.button_text)
+
     async def handle(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> States:
@@ -162,6 +171,10 @@ class TimeTableGGPHandler(BaseHandler):
     @property
     def button_text(self) -> str:
         return "Получить 🕗 этапа"
+
+    @property
+    def button(self) -> KeyboardButton:
+        return KeyboardButton(self.button_text)
 
     async def handle(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -250,6 +263,10 @@ class GGPSubscriptionHandler(BaseSubscriptionHandler):
     def button_text(self) -> str:
         return "📝 Подписаться на GGP классы"
 
+    @property
+    def button(self) -> KeyboardButton:
+        return KeyboardButton(self.button_text)
+
 
 class BaseFigureSubscriptionHandler(BaseSubscriptionHandler):
     """Обработчик подписки на базовые фигуры"""
@@ -263,6 +280,10 @@ class BaseFigureSubscriptionHandler(BaseSubscriptionHandler):
     def button_text(self) -> str:
         return "📝 Подписаться на Базовые фигуры"
 
+    @property
+    def button(self) -> KeyboardButton:
+        return KeyboardButton(self.button_text)
+
 
 class BaseSelectionHandler(BaseHandler, SubscriptionHandlerMixin):
     """Базовый обработчик выбора класса"""
@@ -274,6 +295,10 @@ class BaseSelectionHandler(BaseHandler, SubscriptionHandlerMixin):
     @property
     def button_text(self) -> str:
         return ""
+
+    @property
+    def button(self) -> KeyboardButton:
+        return KeyboardButton(self.button_text)
 
     async def handle(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
