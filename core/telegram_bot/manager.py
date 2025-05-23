@@ -10,6 +10,7 @@ from telegram_bot.keyboard import (
     GGPSelectionHandler,
     BaseFigureSubscriptionHandler,
     BaseFigureSelectionHandler,
+    TimeTableGGPHandler,
 )
 from telegram_bot.states import States
 from telegram_bot.utils.users import create_user_from_telegram
@@ -26,6 +27,7 @@ class KeyboardManager:
     def _register_handlers(self) -> None:
         # Главное меню
         self.add_handler(TrackHandler())
+        self.add_handler(TimeTableGGPHandler())
         self.add_handler(GGPSubscriptionHandler())
         self.add_handler(BaseFigureSubscriptionHandler())
 
