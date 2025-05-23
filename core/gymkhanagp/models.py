@@ -17,6 +17,8 @@ class CompetitionTypeModel(models.Model):
     def __str__(self):
         return f"{self.name} - {self.description}"
 
+    objects = models.Manager()
+
 
 class SportsmanClassModel(models.Model):
     name = models.CharField(max_length=2, unique=True, verbose_name="Класс спортсмена")
@@ -34,9 +36,11 @@ class SportsmanClassModel(models.Model):
     def __str__(self):
         return f"{self.name} - {self.description}"
 
+    objects = models.Manager()
+
 
 class UserSubscription(models.Model):
-    user = models.OneToOneField(
+    user: User = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="subscriptions"
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата подписки")
@@ -63,7 +67,9 @@ class UserSubscription(models.Model):
         verbose_name_plural = "Подписки"
 
     def __str__(self):
-        return f"{self.user.username}"
+        return f"{self.user}"
+
+    objects = models.Manager()
 
 
 class Subscription(models.Model):
@@ -81,3 +87,5 @@ class Subscription(models.Model):
 
     def __str__(self):
         return f"{self.user_subscription.user.username} - {self.competition_type.name} - {self.sportsman_class.name}"
+
+    objects = models.Manager()

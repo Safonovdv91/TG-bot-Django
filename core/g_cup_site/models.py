@@ -106,6 +106,8 @@ class StageModel(models.Model):
     def description_display(self):
         return mark_safe(self.championship.description)
 
+    objects = models.Manager()
+
 
 class MotorcycleModel(models.Model):
     """Модель мотоциклов"""
@@ -116,6 +118,9 @@ class MotorcycleModel(models.Model):
         verbose_name = "Мотоцикл"
         verbose_name_plural = "Мотоциклы"
 
+    def __str__(self):
+        return f"{self.title}"
+
 
 class CountryModel(models.Model):
     """Модель стран"""
@@ -125,6 +130,9 @@ class CountryModel(models.Model):
     class Meta:
         verbose_name = "Страна"
         verbose_name_plural = "Страны"
+
+    def __str__(self):
+        return f"{self.title}"
 
 
 class CityModel(models.Model):
@@ -137,6 +145,9 @@ class CityModel(models.Model):
         verbose_name="Страна",
         related_name="cities",
     )
+
+    def __str__(self):
+        return f"{self.title}"
 
 
 class AthleteModel(models.Model):
@@ -226,6 +237,9 @@ class BaseFigureModel(models.Model):
         verbose_name = "Базовая фигура"
         verbose_name_plural = "Базовые фигуры"
         ordering = ["-id"]
+
+    def __str__(self):
+        return f"{self.title}"
 
 
 class BaseFigureSportsmanResultModel(models.Model):
