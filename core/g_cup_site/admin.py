@@ -89,10 +89,8 @@ class StageResultModelAdmin(admin.ModelAdmin):
         "result_time",
         "video",
     )
-    list_filter = ("stage", "date", "motorcycle")
+    list_filter = ("stage", "date")
     ordering = ("-date", "result_time_seconds")
-
-    select_related = ("motorcycle",)
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("motorcycle")
