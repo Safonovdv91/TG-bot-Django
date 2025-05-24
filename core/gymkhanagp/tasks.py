@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
     retry_backoff_max=600,
     retry_jitter=True,
     acks_late=True,
+    rate_limit="14/s",
     reject_on_worker_lost=True,
     autoretry_for=(Exception,),
 )
@@ -22,4 +23,4 @@ def send_telegram_message_task(self, telegram_id: int, message: str) -> str:
     # Высылаем сообщение пользователю
     logger.info("Запущена задача по отправке сообщения")
     async_to_sync(send_telegram_message)(telegram_id, message)
-    return f"tg_msg: [{telegram_id}]: {message}"
+    return f"[{telegram_id}]: {message}"
