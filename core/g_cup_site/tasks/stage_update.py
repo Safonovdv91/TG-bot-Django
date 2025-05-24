@@ -13,6 +13,7 @@ def stage_update(stage_id: int):
     """Периодическое обновление этапа c переданным id."""
     stage_results = StageGGPHandeler(stage_id)
     stage_results.handle()
+    return stage_results.get_data()
 
 
 @celery_app.task
@@ -20,6 +21,7 @@ def base_figure_update(figure_id: int):
     """Получение результатов для базовой фигуры."""
     stage_results = BaseFigureHandler(figure_id)
     stage_results.handle()
+    return stage_results.get_data()
 
 
 @celery_app.task

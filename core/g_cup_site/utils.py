@@ -1,5 +1,6 @@
 import logging
 import os
+from abc import abstractmethod
 from datetime import datetime
 from enum import EnumType
 from typing import Dict, List
@@ -158,8 +159,12 @@ class BaseHandler:
         self.entity_data = None
         self.COMPETITION_TYPE = None
 
+    @abstractmethod
     def handle(self) -> None:
-        raise NotImplementedError
+        pass
+
+    def get_data(self) -> dict:
+        return self.changes
 
     @staticmethod
     def parse_unix_time(timestamp: float) -> datetime | None:
