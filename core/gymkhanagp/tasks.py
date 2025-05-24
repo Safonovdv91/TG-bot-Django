@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
     retry_backoff_max=600,
     retry_jitter=True,
     acks_late=True,
-    rate_limit="14/s",
+    rate_limit="1/s",
     reject_on_worker_lost=True,
     autoretry_for=(Exception,),
 )
