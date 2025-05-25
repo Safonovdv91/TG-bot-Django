@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "gymkhanagp",
     "g_cup_site",
     "telegram_bot",
+    "users",
 ]
 
 AUTHENTICATION_BACKENDS = [

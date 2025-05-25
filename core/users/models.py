@@ -12,16 +12,21 @@ class BaseModel(models.Model):
         abstract = True
 
 
-class Profile(BaseModel):
+class Report(BaseModel):
+    SOURCE_REPORT = {
+        "Telegram": "Telegram",
+        "Website": "Website",
+        "Other": "Other",
+    }
     user = models.OneToOneField(user, on_delete=models.CASCADE)
-    is_active = models.BooleanField(default=True, verbose_name="Активный профиль")
+    text = models.TextField(verbose_name="Текст отчета")
+    source = models.CharField(
+        max_length=20, choices=SOURCE_REPORT.items(), verbose_name="Источник отчета"
+    )
 
     class Meta:
-        verbose_name = "Профиль пользователя"
-        verbose_name_plural = "Профили пользователей"
+        verbose_name = "Репорт пользователя"
+        verbose_name_plural = "Репорты пользователей"
         ordering = ("-created_at",)
-        db_table = "profiles"
+        db_table = "reports"
         default_related_name = "profile"
-
-    def __str__(self):
-        return f"{[self.user.username]}"
