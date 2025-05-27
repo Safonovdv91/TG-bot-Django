@@ -86,7 +86,7 @@ class ReportHandler:
         creator = ReportCreator(validator)
 
         try:
-            report = await creator.create_report(type_report.BUG)
+            report = await creator.create_report(type_report)
             logger.info(f"Created report: {report.id}")
             return True, "✅ Отчет успешно сохранен!"
         except ValidationError as e:

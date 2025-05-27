@@ -12,6 +12,7 @@ from telegram_bot.keyboard import (
     BaseFigureSelectionHandler,
     TimeTableGGPHandler,
     BugReportHandler,
+    FeatureReportHandler,
 )
 from telegram_bot.states import States
 from telegram_bot.utils.users import create_user_from_telegram
@@ -48,6 +49,7 @@ class KeyboardManager:
         self.add_class_selection_handler(GGPSelectionHandler())
         self.add_class_selection_handler(BaseFigureSelectionHandler())
         self.add_class_selection_handler(BugReportHandler())
+        self.add_class_selection_handler(FeatureReportHandler())
 
     def add_handler(
         self,
@@ -76,6 +78,8 @@ class KeyboardManager:
             handler = self._class_selection_handlers.get("BaseFigureSelectionHandler")
         elif current_state == States.BUG_REPORT_WAIT:
             handler = self._class_selection_handlers.get("BugReportHandler")
+        elif current_state == States.FEATURE_REPORT_WAIT:
+            handler = self._class_selection_handlers.get("FeatureReportHandler")
         if handler:
             new_state = await handler.handle(update, context)
             context.user_data["state"] = new_state
