@@ -1,11 +1,13 @@
 import logging
+
 from telegram import Update
 from telegram.ext import ContextTypes
 
 from telegram_bot.manager import KeyboardManager
 from telegram_bot.states import States
 from telegram_bot.utils.users import create_user_from_telegram
-
+from users.models import SourceReports, TypeReport
+from users.utils import ReportHandler, AdminNotifier, get_user_by_telegram_id
 
 logger = logging.getLogger(__name__)
 
@@ -44,15 +46,26 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None | St
 
 
 async def bug_report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> States:
-    logger.info(f"Bug report: {update.message.text}")
-    text = update.message.text.strip("/bug_report")[1:]
-    if text:
-        logger.info(f"Bug report: {text}")
-        await update.message.reply_text("Спасибо за багрепорт!")
-        return States.MAIN_MENU
+    text = " ".join(context.args) if context.args else None
+    if text is None:
+        await update.message.reply_text(
+            "Опишите пожалуйста проблему в одном сообщении:"
+        )
+        context.user_data["state"] = States.BUG_REPORT_WAIT
+        return States.BUG_REPORT_WAIT
 
-    await update.message.reply_text("Введите текст баг-репорта")
-    return States.BUG_REPORT_WAIT
+    user = get_user_by_telegram_id(update.effective_user.id)
+    success, message = await ReportHandler.handle_report(
+        user=user, text=text, source=SourceReports.TELEGRAM, type_report=TypeReport.BUG
+    )
+
+    if not success:
+        admin_contact = await AdminNotifier.get_admin_contacts()
+        message += f"\nСвяжитесь с администратором: {admin_contact}"
+
+    await update.message.reply_text(message)
+    context.user_data["state"] = States.MAIN_MENU
+    return States.MAIN_MENU
 
 
 async def feature_report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> States:
