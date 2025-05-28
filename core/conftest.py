@@ -27,9 +27,7 @@ async def django_user():
         email="test@example.com",
         password="password1234",
     )
-    await SocialAccount.objects.acreate(
-        user=user, provider="telegram", uid=123456789
-    )
+    await SocialAccount.objects.acreate(user=user, provider="telegram", uid=123456789)
     return user
 
 
