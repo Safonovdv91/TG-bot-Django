@@ -36,6 +36,7 @@ class Report(BaseModel):
     report_type = models.CharField(
         max_length=20,
         verbose_name="Тип отчета",
+        choices=TypeReport.choices,
         default=TypeReport.OTHER,
     )
     resolved = models.BooleanField(default=False)

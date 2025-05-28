@@ -87,9 +87,10 @@ class KeyboardManager:
             logger.warning(
                 "Получено сообщение без статуса. Возвращаем к главному меню."
             )
+            logger.warning(f"Текст сообщения: {text}")
             context.user_data["state"] = States.MAIN_MENU
             await update.message.reply_text(
-                "Главное меню:", reply_markup=self.get_main_keyboard()
+                "Главное меню: ✔️ 📈 ❌", reply_markup=self.get_main_keyboard()
             )
 
     async def _handle_regular_message(
