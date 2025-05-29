@@ -21,6 +21,8 @@ from telegram_bot.utils.math_calculate import (
     TimeConverter,
 )
 from telegram_bot.utils.messages import MessageTimeTableFormatter
+from users.models import SourceReports, TypeReport
+from users.utils import get_user_by_telegram_id, ReportHandler
 
 logger = logging.getLogger(__name__)
 
@@ -360,6 +362,64 @@ class BaseSelectionHandler(BaseHandler, SubscriptionHandlerMixin):
             f"Вы {action} - {class_name}",
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
         )
+
+
+class BugReportHandler(BaseHandler):
+    @property
+    def button_text(self) -> str:
+        return "Отправить 🐞 баг-репорт"
+
+    @property
+    def button(self) -> KeyboardButton:
+        return KeyboardButton(self.button_text)
+
+    async def handle(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> States:
+        user = get_user_by_telegram_id(update.effective_user.id)
+        text = update.message.text
+        success, message = await ReportHandler.handle_report(
+            user=user,
+            text=text,
+            source=SourceReports.TELEGRAM,
+            type_report=TypeReport.BUG,
+        )
+        if success:
+            await update.message.reply_text("🐞 Баг-report Успешно зарегестрирован 🐞")
+            return States.MAIN_MENU
+
+        await update.message.reply_text(message)
+        return States.BUG_REPORT_WAIT
+
+
+class FeatureReportHandler(BaseHandler):
+    @property
+    def button_text(self) -> str:
+        return "Предложить ✨ фичу"
+
+    @property
+    def button(self) -> KeyboardButton:
+        return KeyboardButton(self.button_text)
+
+    async def handle(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> States:
+        user = get_user_by_telegram_id(update.effective_user.id)
+        text = update.message.text
+        success, message = await ReportHandler.handle_report(
+            user=user,
+            text=text,
+            source=SourceReports.TELEGRAM,
+            type_report=TypeReport.FEATURE,
+        )
+        if success:
+            await update.message.reply_text(
+                "✨ Фича успешно зарегестрирована, и будет рассмотрена в свободное время, спасибо! ✨"
+            )
+            return States.MAIN_MENU
+
+        await update.message.reply_text(message)
+        return States.FEATURE_REPORT_WAIT
 
 
 class GGPSelectionHandler(BaseSelectionHandler):
