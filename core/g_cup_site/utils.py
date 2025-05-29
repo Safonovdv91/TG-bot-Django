@@ -224,20 +224,26 @@ class BaseHandler:
         self, result_data: Dict, athlete: AthleteModel, entity_title: str
     ) -> None:
         """Обработка уведомления о новом результате"""
+        entity_title = "🆕 " + entity_title
+        if result_data.get("percent") == 100:
+            entity_title += "\n\n ❗❗ Новый лидер этапа: ❗❗"
         message = (
-            f"🆕 Новый результат: {athlete.full_name}\n"
+            f"{athlete.full_name}\n"
             f"Время: {result_data['resultTime']} [{result_data['percent']}%]\n"
             f"Мотоцикл: {result_data.get('motorcycle', '---')}\n"
+            f"Город: {result_data.get('userCity', '---')}\n"
             f"Видео: {result_data.get('video', '')}"
         )
-        if result_data.get("percent") == 100:
-            message = "\n\n❗❗ Новый лидер этапа: ❗❗\n\n" + message
 
         athlete_class = result_data.get("athleteClass")
         if not athlete_class:
             athlete_class = athlete.sportsman_class
 
-        self._send_class_notifications(athlete_class, message, entity_title)
+        self._send_class_notifications(
+            athlete_class,
+            message,
+            entity_title,
+        )
 
     def _update_existing_result(
         self,
@@ -273,16 +279,18 @@ class BaseHandler:
         entity_title: str,
     ) -> None:
         """Обработка уведомления об улучшении результата"""
+        entity_title = "⬆️ " + entity_title
+        if result_data.get("percent") == 100:
+            entity_title += "\n\n ❗❗ Новый лидер этапа: ❗❗"
         message = (
-            f"⚡ Улучшение результата: {athlete.full_name}\n"
+            f"{athlete.full_name}\n"
             f"Старое время: {old_time}\n"
             f"Новое время: {result_data['resultTime']} [{result_data['percent']}%] "
             f"(⬆️{time_diff:.2f})\n"
             f"Мотоцикл: {result_data.get('motorcycle', '---')}\n"
+            f"Город: {result_data.get('userCity', '---')}\n"
             f"Видео: {result_data.get('video', '')}"
         )
-        if result_data.get("percent") == 100:
-            message = "\n ❗❗ Новый лидер этапа: ❗❗\n\n" + message
 
         athlete_class = result_data.get("athleteClass")
         if not athlete_class:
