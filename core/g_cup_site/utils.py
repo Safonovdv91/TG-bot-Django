@@ -230,6 +230,9 @@ class BaseHandler:
             f"Мотоцикл: {result_data.get('motorcycle', '---')}\n"
             f"Видео: {result_data.get('video', '')}"
         )
+        if result_data.get("percent") == 100:
+            message = "\n\n❗❗ Новый лидер этапа: ❗❗\n\n" + message
+
         athlete_class = result_data.get("athleteClass")
         if not athlete_class:
             athlete_class = athlete.sportsman_class
@@ -278,6 +281,9 @@ class BaseHandler:
             f"Мотоцикл: {result_data.get('motorcycle', '---')}\n"
             f"Видео: {result_data.get('video', '')}"
         )
+        if result_data.get("percent") == 100:
+            message = "\n ❗❗ Новый лидер этапа: ❗❗\n\n" + message
+
         athlete_class = result_data.get("athleteClass")
         if not athlete_class:
             athlete_class = athlete.sportsman_class
