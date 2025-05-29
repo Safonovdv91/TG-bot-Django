@@ -228,6 +228,7 @@ class BaseHandler:
             f"🆕 Новый результат: {athlete.full_name}\n"
             f"Время: {result_data['resultTime']} [{result_data['percent']}%]\n"
             f"Мотоцикл: {result_data.get('motorcycle', '---')}\n"
+            f"Город: {result_data.get('userCity', '---')}\n"
             f"Видео: {result_data.get('video', '')}"
         )
         if result_data.get("percent") == 100:
@@ -279,6 +280,7 @@ class BaseHandler:
             f"Новое время: {result_data['resultTime']} [{result_data['percent']}%] "
             f"(⬆️{time_diff:.2f})\n"
             f"Мотоцикл: {result_data.get('motorcycle', '---')}\n"
+            f"Город: {result_data.get('userCity', '---')}\n"
             f"Видео: {result_data.get('video', '')}"
         )
         if result_data.get("percent") == 100:
