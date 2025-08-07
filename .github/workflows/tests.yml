@@ -52,7 +52,7 @@ jobs:
       - name: Install dependencies from pyproject.toml
         run: |
           source .venv/bin/activate
-          uv pip install --all-extras
+          uv pip install --editable . --all-extras
           
       - name: Run migrations
         run: |
