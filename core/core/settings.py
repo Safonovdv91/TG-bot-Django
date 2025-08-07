@@ -1,6 +1,15 @@
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
+
+
+def get_list_env(name: str) -> list[str]:
+    if os.getenv(name) is None:
+        raise ValueError(f"Не указано {name}в переменных окружения")
+
+    return [item.strip() for item in os.getenv(name, "").split(",") if item.strip()]
+
 
 load_dotenv()
 load_dotenv("core/.env")
@@ -9,17 +18,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 
 
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
-DEBUG = True if os.environ.get("DJANGO_DEBUG") else False
-SITE_ID = os.environ.get("DJANGO_SITE_ID")
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(",")
-CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS").split(",")
-CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS").split(",")
-
-INTERNAL_IPS = ["127.0.0.1"]
+SECRET_KEY: str | None = os.environ.get("DJANGO_SECRET_KEY")
+DEBUG: bool = True if os.environ.get("DJANGO_DEBUG") else False
+SITE_ID: str | None = os.environ.get("DJANGO_SITE_ID")
+ALLOWED_HOSTS = get_list_env("DJANGO_ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = get_list_env("CSRF_TRUSTED_ORIGINS")
+CORS_ALLOWED_ORIGINS = get_list_env("CORS_ALLOWED_ORIGINS")
 
 
-INSTALLED_APPS = [
+INTERNAL_IPS: list[str] = ["127.0.0.1"]
+
+
+INSTALLED_APPS: list[str] = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -39,12 +49,12 @@ INSTALLED_APPS = [
     "users",
 ]
 
-AUTHENTICATION_BACKENDS = [
+AUTHENTICATION_BACKENDS: list[str] = [
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
-MIDDLEWARE = [
+MIDDLEWARE: list[str] = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
