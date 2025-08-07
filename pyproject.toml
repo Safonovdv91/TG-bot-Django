@@ -25,7 +25,10 @@ dependencies = [
     "flower>=2.0.1",
 ]
 
-[dependency-groups]
+[tool.setuptools]
+packages = ["core"]
+
+[project.optional-dependencies]
 dev = [
     "black>=25.1.0",
     "django-debug-toolbar>=5.0.1",
@@ -37,7 +40,7 @@ dev = [
     "pytest-django>=4.9.0",
     "pytest-mock>=3.14.0",
     "pytest-cov>=6.2.1",
-    "ruff>=0.9.4",
+    "ruff>=0.9.4"
 ]
 
 [tool.ruff]
