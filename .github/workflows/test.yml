@@ -21,8 +21,6 @@ jobs:
           --health-interval=5s
           --health-timeout=5s
           --health-retries=5
-
-
     steps:
       - uses: actions/checkout@v4
 
@@ -45,10 +43,9 @@ jobs:
       - name: Run migrations
         run: uv run core/manage.py migrate --noinput
 
-
-      - name: Run tests with pytest
+      - name: Run tests
         env:
-          DJANGO_SETTINGS_MODULE: core.settings.test
-          DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_db
-        run: |
-          uv run pytest core/tests -v --cov=core --cov-report=xml
+          DJANGO_SETTINGS_MODULE: core.core.test
+          DATABASE_URL: postgres://test_user:test_password@localhost:5432/mgbot
+          CI: true
+        run: cd core ; uv run pytest tests
