@@ -42,8 +42,5 @@ jobs:
             sleep 2
           done
 
-      - name: Run migrations
-        run: uv run core/manage.py migrate --noinput
-
       - name: Run tests
         run: cd core ; uv run pytest tests
