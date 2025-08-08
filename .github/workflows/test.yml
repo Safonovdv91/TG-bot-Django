@@ -1,4 +1,4 @@
-name: Tests
+name: FULL Tests
 
 on: [push, pull_request]
 
@@ -18,9 +18,6 @@ jobs:
       - name: Install the project
         run: uv sync --locked --all-extras --dev
 
-      - name: Apply migrations
-        run: uv run core/manage.py migrate --noinput
-        
       - name: Run tests
-        run: uv run pytest core/tests
+        run: uv run pytest core/
         
