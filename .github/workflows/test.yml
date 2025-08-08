@@ -45,6 +45,6 @@ jobs:
 
       - name: Run tests
         env:
-          DATABASE_URL: postgres://test_user:test_password@localhost:5432/mgbot
+          DATABASE_URL: postgres://postgress_user:postgress_password@localhost:5432/mgbot
           CI: true
         run: cd core; uv run pytest 
