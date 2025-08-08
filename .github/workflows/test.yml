@@ -48,4 +48,4 @@ jobs:
           DJANGO_SETTINGS_MODULE: core.core.test
           DATABASE_URL: postgres://test_user:test_password@localhost:5432/mgbot
           CI: true
-        run: cd core ; uv run pytest tests
+        run: uv run pytest core/tests
