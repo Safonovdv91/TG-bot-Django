@@ -1,19 +1,29 @@
+import os
+
 from .settings import *
 
-
-# Тестовая база данных
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": ":memory:",
-        "OPTIONS": {
-            "timeout": 30,
-        },
-        "TEST": {
+# Настройки для локального тестирования (SQLite)
+if os.getenv("CI") != "true":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
             "NAME": ":memory:",
-        },
+            "OPTIONS": {"timeout": 30},
+            "TEST": {"NAME": ":memory:"},
+        }
     }
-}
+else:
+    # Настройки для CI (PostgreSQL)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "test_db",
+            "USER": "test_user",
+            "PASSWORD": "test_password",
+            "HOST": "localhost",
+            "PORT": "5432",
+        }
+    }
 DATABASE_ROUTERS = []
 
 
