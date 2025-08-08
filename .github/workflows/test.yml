@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   uv-test:
     runs-on: ubuntu-latest
-
+    environment: test
     steps:
       - uses: actions/checkout@v4
 
