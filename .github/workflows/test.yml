@@ -13,11 +13,11 @@ jobs:
         ports:
           - 5432:5432
         env:
-          POSTGRES_DB: mgbot
-          POSTGRES_USER: postgress_user
-          POSTGRES_PASSWORD: postgress_password
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
         options: >-
-          --health-cmd="pg_isready -U postgress_user -d mgbot"
+          --health-cmd="pg_isready -U test_user -d test_db"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=5
@@ -45,6 +45,6 @@ jobs:
 
       - name: Run tests
         env:
-          DATABASE_URL: postgres://postgress_user:postgress_password@localhost:5432/mgbot
+          DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_db
           CI: true
         run: cd core; uv run pytest 
