@@ -6,16 +6,18 @@ from dotenv import load_dotenv
 
 def get_list_env(name: str) -> list[str]:
     if os.getenv(name) is None:
-        raise ValueError(f"Не указано {name}в переменных окружения")
+        raise ValueError(f"Не указано {name} в переменных окружения")
 
     return [item.strip() for item in os.getenv(name, "").split(",") if item.strip()]
 
 
-load_dotenv()
-load_dotenv("core/.env")
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 # BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
+
+if (BASE_DIR / "../.env").exists():
+    load_dotenv(".env")
+else:
+    load_dotenv(BASE_DIR / "../.env.prod")
 
 
 SECRET_KEY: str | None = os.environ.get("DJANGO_SECRET_KEY")

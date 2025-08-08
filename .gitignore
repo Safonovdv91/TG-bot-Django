@@ -179,3 +179,4 @@ core/backups/
 core/static/
 migrations
 .vscode/
+.pylintrc
