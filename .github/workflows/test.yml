@@ -6,8 +6,28 @@ jobs:
   uv-test:
     runs-on: ubuntu-latest
     environment: test
+
+    services:
+      postgres:
+        image: postgres:17.2
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: mgbot
+          POSTGRES_USER: postgress_user
+          POSTGRES_PASSWORD: postgress_password
+        options: >-
+          --health-cmd="pg_isready -U postgress_user -d mgbot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+
+
     steps:
       - uses: actions/checkout@v4
+
+      - name: Copy .env.prod to .env
+        run: cp core/.env.prod core/.env
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -15,9 +35,20 @@ jobs:
       - name: Print all env vars
         run: env
 
-      - name: Install the project
-        run: uv sync --locked --all-extras --dev
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U postgress_user; do
+            echo "Waiting for postgres..."
+            sleep 2
+          done
+
+      - name: Run migrations
+        env:
+          DJANGO_SETTINGS_MODULE: core.settings
+        run: uv run python manage.py migrate --noinput
 
       - name: Run tests
+        env:
+          DJANGO_SETTINGS_MODULE: core.settings
         run: uv run pytest core/tests
-        
+
