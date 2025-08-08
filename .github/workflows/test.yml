@@ -51,4 +51,3 @@ jobs:
         env:
           DJANGO_SETTINGS_MODULE: core.settings
         run: cd core ; uv run pytest tests
-
