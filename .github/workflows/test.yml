@@ -3,44 +3,34 @@ name: FULL Tests
 on: [push, pull_request]
 
 jobs:
-  uv-test:
+  test:
     runs-on: ubuntu-latest
-    environment: test
-
-    services:
-      postgres:
-        image: postgres:17.2
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_DB: mgbot
-          POSTGRES_USER: postgress_user
-          POSTGRES_PASSWORD: postgress_password
-        options: >-
-          --health-cmd="pg_isready -U postgress_user -d mgbot"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=5
-
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Copy .env.prod to .env
-        run: cp .env.prod core/.env
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
+        with:
+          path: ~/.cargo/bin  # Опционально, для кэширования
 
-      - name: Install requirements
-        run: uv sync --all-extras --dev
-
-      - name: Wait for PostgreSQL
+      - name: Install dependencies
         run: |
-          until pg_isready -h localhost -p 5432 -U postgress_user; do
-            echo "Waiting for postgres..."
-            sleep 2
-          done
+          uv pip install -e .[dev]
+          uv pip install pytest pytest-django
 
-      - name: Run tests
-        run: cd core ; uv run pytest tests
+      - name: Run tests with pytest
+        env:
+          DJANGO_SETTINGS_MODULE: core.test
+        run: |
+          pytest core/tests -v --cov=core --cov-report=xml
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        if: success()
+        
