@@ -40,6 +40,9 @@ jobs:
             sleep 2
           done
 
+      - name: Make migrations
+        run: uv run core/manage.py makemigrations
+
       - name: Run migrations
         run: uv run core/manage.py migrate --noinput
 
