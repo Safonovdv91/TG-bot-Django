@@ -45,7 +45,7 @@ jobs:
       - name: Run migrations
         env:
           DJANGO_SETTINGS_MODULE: core.settings
-        run: uv run python manage.py migrate --noinput
+        run: uv run core/manage.py migrate --noinput
 
       - name: Run tests
         env:
