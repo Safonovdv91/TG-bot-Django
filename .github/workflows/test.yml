@@ -50,4 +50,4 @@ jobs:
       - name: Run tests
         env:
           DJANGO_SETTINGS_MODULE: core.settings
-        run: uv run pytest core/tests
+        run: uv run pytest tests
