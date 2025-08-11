@@ -1,17 +1,16 @@
 name: CI - Lint & Test
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-on: [push, pull_request]
 
 jobs:
   uv-lint:
-    name: Run Ruff Linter (Python ${{ matrix.python-version }} / ${{ matrix.os }})
-    runs-on: ${{matrix.os}} 
+    name: Run Ruff Linter
+    runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-18.04, ubuntu-20.04,ubuntu-22.04, ubuntu-latest]
-        python-version: ['3.11', '3.12', '3.13']
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,9 +29,18 @@ jobs:
 
 
   uv-test:
-    runs-on: ubuntu-latest
+    name: Run Tests (Python ${{ matrix.python-version }} / ${{ matrix.os }})
+    runs-on: ${{matrix.os}} 
     environment: test
     needs: uv-lint
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-latest]
+        python-version: 
+          - "3.12"
+          - "3.13"
 
     services:
       postgres:
@@ -55,8 +63,11 @@ jobs:
       - name: Copy .env.prod to .env
         run: cp .env.prod core/.env
 
-      - name: Install uv
+      - name: Install uv and set the python version
         uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
 
       - name: Install requirements
         run: uv sync --all-extras --dev
