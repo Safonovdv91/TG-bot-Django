@@ -39,7 +39,6 @@ jobs:
       matrix:
         os: [ubuntu-18.04, ubuntu-20.04, ubuntu-latest]
         python-version: 
-          - "3.12"
           - "3.13"
 
     services:
