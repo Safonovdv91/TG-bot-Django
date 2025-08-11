@@ -1,0 +1,76 @@
+name: CI - Lint & Test
+
+on: [push, pull_request]
+
+jobs:
+  uv-lint:
+    name: Run Ruff Linter
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy .env.prod to .env
+        run: cp .env.prod core/.env
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install requirements
+        run: uv sync --all-extras --dev
+
+      - name: Run ruff
+        run: uv run ruff check .
+
+
+  uv-test:
+    runs-on: ubuntu-latest
+    environment: test
+    needs: uv-lint
+
+    services:
+      postgres:
+        image: postgres:17.2
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd="pg_isready -U test_user -d test_db"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy .env.prod to .env
+        run: cp .env.prod core/.env
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install requirements
+        run: uv sync --all-extras --dev
+
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U postgress_user; do
+            echo "Waiting for postgres..."
+            sleep 2
+          done
+
+      - name: Make migrations
+        run: uv run core/manage.py makemigrations
+
+      - name: Run migrations
+        run: uv run core/manage.py migrate --noinput
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_db
+          CI: true
+        run: cd core; uv run pytest 
