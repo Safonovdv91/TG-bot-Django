@@ -22,7 +22,8 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Copy .env.prod to .env
         run: cp .env.prod core/.env
