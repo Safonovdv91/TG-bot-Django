@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
-from django.db import models
 from django.core.validators import MinValueValidator
+from django.db import models
 from django.utils.safestring import mark_safe
 
 CLASS_CHOICES = [
@@ -96,7 +96,7 @@ class StageModel(models.Model):
         ordering = ["date_start"]
 
     def __str__(self):
-        return f"{self.title} ({self.get_status_display()})"
+        return f"{self.title}"
 
     def clean(self):
         if self.date_end and self.date_start and self.date_end < self.date_start:
