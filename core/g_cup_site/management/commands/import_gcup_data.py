@@ -1,21 +1,20 @@
 import logging
 from datetime import datetime
 
-from django.db.models import UniqueConstraint
+from django.core.management.base import BaseCommand
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from django.core.management.base import BaseCommand
-from django.db import transaction
-from g_cup_site.utils import APIGetter
 from g_cup_site.models import (
-    ChampionshipModel,
-    StageModel,
     AthleteModel,
-    CountryModel,
+    ChampionshipModel,
     CityModel,
-    StageResultModel,
+    CountryModel,
     MotorcycleModel,
+    StageModel,
+    StageResultModel,
 )
+from g_cup_site.utils import APIGetter
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +165,7 @@ class Command(BaseCommand):
                 )
                 logger.info(f"Результат {stage_result} добавлен в базу данных")
 
-            except UniqueConstraint as e:
+            except IntegrityError as e:
                 logger.exception(
                     f"stage_result: {result_data} не добавлен в базу данных: {e}"
                 )
