@@ -166,8 +166,11 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_BOT_TOKEN").split(":")[0]
+TELEGRAM_BOT_TOKEN: str | None = os.environ.get("TELEGRAM_BOT_TOKEN")
+if TELEGRAM_BOT_TOKEN is None:
+    raise ValueError("Не указан TELEGRAM_BOT_TOKEN")
+
+TELEGRAM_CHAT_ID: str = TELEGRAM_BOT_TOKEN.split(":")[0]
 
 # Provider specific settings
 SOCIALACCOUNT_PROVIDERS = {
