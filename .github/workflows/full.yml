@@ -30,14 +30,14 @@ jobs:
 
   uv-test:
     name: Run Tests (Python ${{ matrix.python-version }} / ${{ matrix.os }})
-    runs-on: ${{matrix.os}} 
+    runs-on: ubuntu-20.04
     environment: test
     needs: uv-lint
 
     strategy:
-      fail-fast: false
       matrix:
-        os: [ubuntu-20.04]
+        os:
+          - ubuntu-20.04  
         python-version: 
           - "3.13"
 
