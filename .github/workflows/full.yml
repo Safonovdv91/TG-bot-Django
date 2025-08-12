@@ -9,7 +9,7 @@ on:
 jobs:
   uv-lint:
     name: Run Ruff Linter
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout repository
@@ -29,17 +29,10 @@ jobs:
 
 
   uv-test:
-    name: Run Tests (Python ${{ matrix.python-version }} / ${{ matrix.os }})
+    name: Run Tests
     runs-on: ubuntu-20.04
     environment: test
     needs: uv-lint
-
-    strategy:
-      matrix:
-        os:
-          - ubuntu-20.04  
-        python-version: 
-          - "3.13"
 
     services:
       postgres:
@@ -64,16 +57,13 @@ jobs:
 
       - name: Install uv and set the python version
         uses: astral-sh/setup-uv@v6
-        with:
-          python-version: ${{ matrix.python-version }}
-
 
       - name: Install requirements
         run: uv sync --all-extras --dev
 
       - name: Wait for PostgreSQL
         run: |
-          until pg_isready -h localhost -p 5432 -U postgress_user; do
+          until pg_isready -h localhost -p 5432 -U test_user; do
             echo "Waiting for postgres..."
             sleep 2
           done
