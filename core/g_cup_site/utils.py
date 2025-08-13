@@ -2,42 +2,44 @@ import logging
 import os
 from abc import abstractmethod
 from datetime import datetime
-from enum import EnumType
+from enum import Enum
 from typing import Dict, List
 
 import httpx
 from django.contrib.auth import get_user_model
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 from dotenv import load_dotenv
-
-from g_cup_site.models import (
-    StageModel,
-    MotorcycleModel,
-    CountryModel,
-    CityModel,
-    AthleteModel,
-    StageResultModel,
-    BaseFigureModel,
-    BaseFigureSportsmanResultModel,
-)
-from gymkhanagp.models import Subscription, SportsmanClassModel
+from gymkhanagp.models import SportsmanClassModel, Subscription
 from gymkhanagp.tasks import send_telegram_message_task
 from users.utils import get_telegram_id
+
+from g_cup_site.models import (
+    AthleteModel,
+    BaseFigureModel,
+    BaseFigureSportsmanResultModel,
+    CityModel,
+    CountryModel,
+    MotorcycleModel,
+    StageModel,
+    StageResultModel,
+)
 
 load_dotenv()
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
-class TypeChampionship(EnumType):
+class TypeChampionship(Enum):
     GGP = "gp"
     BASE = "base"
 
 
 class APIGetter:
     def __init__(self):
-        self.url = os.environ.get("GYMKHANA_CUP_URL")
-        self.api_key = os.environ.get("GYMKHANA_CUP_TOKEN")
+        self.url: str | None = os.environ.get("GYMKHANA_CUP_URL")
+        self.api_key: str | None = os.environ.get("GYMKHANA_CUP_TOKEN")
 
     def get_data_championships(
         self,
@@ -45,12 +47,15 @@ class APIGetter:
         from_year: int | None = None,
         to_year: int | None = None,
     ):
+        if self.url is None or self.api_key is None:
+            raise ValueError("Не указаны данные для сервиса Gymkhana cup")
+
         url = f"{self.url}/championships/list"
         response = httpx.get(
             url,
             params={
                 "signature": self.api_key,
-                "types": champ_type,
+                "types": champ_type.value,
                 "fromYear": from_year,
                 "toYear": to_year,
             },
@@ -61,7 +66,7 @@ class APIGetter:
             return {}
 
     def get_data_championships_by_id(
-        self, champ_id: int, champ_type: TypeChampionship = TypeChampionship.GGP.title
+        self, champ_id: int, champ_type: TypeChampionship = TypeChampionship.GGP
     ):
         url = f"{self.url}/championships/get"
         response = httpx.get(
@@ -69,7 +74,7 @@ class APIGetter:
             params={
                 "signature": self.api_key,
                 "id": champ_id,
-                "type": champ_type,
+                "type": champ_type.value,
             },
         )
 
@@ -78,7 +83,7 @@ class APIGetter:
         else:
             return {}
 
-    def data_stage(self, stage_id: int, stage_type: str) -> {dict | None}:
+    def data_stage(self, stage_id: int, stage_type: str) -> dict:
         """Получает данные по этапам чемпионата"""
         url = f"{self.url}/stages/get?id=&type="
         response = httpx.get(
@@ -95,7 +100,7 @@ class APIGetter:
         else:
             return {}
 
-    def get_figure_data(self, figure_id: int) -> dict | None:
+    def get_figure_data(self, figure_id: int) -> dict:
         """Получает данные по фигуре"""
         url = f"{self.url}/figures/get"
         response = httpx.get(url, params={"signature": self.api_key, "id": figure_id})
@@ -105,8 +110,14 @@ class APIGetter:
         else:
             return {}
 
-    def get_athlete_data(self, athlete_id: int) -> dict | None:
+    def get_athlete_data(self, athlete_id: int | None) -> dict:
         """Получает данные по спортсмену"""
+        if athlete_id is None:
+            raise TypeError("Attlete_id is None")
+
+        if athlete_id < 0:
+            raise ValueError("Athlete id must be > 0")
+
         url = f"{self.url}/users/get"
         response = httpx.get(url, params={"signature": self.api_key, "id": athlete_id})
 
@@ -118,9 +129,12 @@ class APIGetter:
 
 
 def get_subscribers_for_class(
-    sport_class: str, competition_type: str = "gp"
+    sport_class: str, competition_type: str | None = "gp"
 ) -> List[User]:
     """Получение подписчиков для указанного класса спортсменов."""
+    if competition_type is None:
+        competition_type = "gp"
+
     subscriptions = Subscription.objects.filter(
         sportsman_class__name=sport_class,
         competition_type__name=competition_type,
@@ -130,19 +144,22 @@ def get_subscribers_for_class(
     return users_subscribed
 
 
-def notify_user_telegram_message(user: User, message: str) -> None:
+def notify_user_telegram_message(user: AbstractUser, message: str) -> None:
     """Отправка уведомления в Telegram пользователю."""
-    logger.info(f"Отправка уведомления в Telegram для пользователя {user.username}")
+    logger.info("Отправка уведомления в Telegram для пользователя %s", user.username)
+
     telegram_id = get_telegram_id(user)
     if telegram_id and user.is_active:
         logger.info("Создаем задачу на отправку сообщения в Telegram")
         send_telegram_message_task.delay(telegram_id, message)
         logger.info(
-            f"Уведомление отправлено в Telegram для пользователя {user.username}"
+            "Уведомление отправлено в Telegram для пользователя %s", user.username
         )
         return
 
-    logger.warning(f"Пользователь {user.username} не имеет Telegram ID или не активный")
+    logger.warning(
+        "Пользователь %s не имеет Telegram ID или не активный", user.username
+    )
 
 
 class BaseHandler:
@@ -206,7 +223,7 @@ class BaseHandler:
         if not sport_class:
             raise ValueError("Класс спортсменов не указан")
 
-        subscribers = get_subscribers_for_class(
+        subscribers: List[AbstractBaseUser] = get_subscribers_for_class(
             sport_class, competition_type=self.COMPETITION_TYPE
         )
         athlete_class = SportsmanClassModel.objects.get(
@@ -218,7 +235,10 @@ class BaseHandler:
                 f"{entity_title}\n\n"
                 f"{athlete_class.subscribe_emoji} [{sport_class}] {message}\n"
             )
-            notify_user_telegram_message(subscriber, formatted_message)
+            if subscriber is None:
+                return
+
+            notify_user_telegram_message(user=subscriber, message=formatted_message)  # type:ignore
 
     def _handle_creation_notification(
         self, result_data: Dict, athlete: AthleteModel, entity_title: str
@@ -301,7 +321,9 @@ class BaseHandler:
     def _handle_no_change(self, athlete: AthleteModel) -> None:
         """Обработка отсутствия изменений"""
         self.changes["no_change"] += 1
-        logger.info(f"Без изменений: {athlete.full_name} в этапе {self.entity.title}")
+        logger.info(
+            "Без изменений: %s в этапе %s", athlete.full_name, self.entity.title
+        )
 
 
 class StageGGPHandeler(BaseHandler):
@@ -316,17 +338,19 @@ class StageGGPHandeler(BaseHandler):
         try:
             self._import_single_stage()
             self._log_import_results()
-        except Exception as e:
-            logger.exception(f"Ошибка при импорте данных этапа: {e}")
+        except Exception as exc:
+            logger.exception("Ошибка при импорте данных этапа: /n %s", exc)
 
     def _import_single_stage(self) -> None:
         """Импорт данных для одного этапа"""
-        logger.info(f"Начинаем импорт этапа: {self.COMPETITION_TYPE}|{self.stage_id}")
+        logger.info(
+            "Начинаем импорт этапа: %s | %s", self.COMPETITION_TYPE, self.stage_id
+        )
 
         self.entity_data = self.api.data_stage(self.stage_id, "gp")
         if not self.entity_data:
             logger.warning(
-                f"Нет данных для этапа: {self.COMPETITION_TYPE}|{self.stage_id}"
+                "Нет данных для этапа: %s | %s", self.COMPETITION_TYPE, self.stage_id
             )
             return
 
@@ -344,7 +368,7 @@ class StageGGPHandeler(BaseHandler):
         """Обработка одного результата"""
         new_time = result_data.get("resultTimeSeconds")
         if not new_time:
-            logger.warning(f"Отсутствует время для результата: {result_data}")
+            logger.warning("Отсутствует время для результата: %s", result_data)
             return
 
         athlete = self.get_or_create_athlete(result_data)
@@ -379,9 +403,10 @@ class StageGGPHandeler(BaseHandler):
     def _log_import_results(self) -> None:
         """Логирование результатов импорта"""
         logger.info(
-            f"Импорт завершен. Новые: {self.changes['new_result']}, "
-            f"Улучшенные: {self.changes['improved_result']}, "
-            f"Без изменений: {self.changes['no_change']}"
+            "Импорт завершен. Новые:\n %s, \nУлучшенные: %s , \nБез изменений: %s ",
+            self.changes["new_result"],
+            self.changes["improved_result"],
+            self.changes["no_change"],
         )
 
 
@@ -398,8 +423,8 @@ class BaseFigureHandler(BaseHandler):
         try:
             self._import_figure_results()
             self._log_import_results()
-        except Exception as e:
-            logger.exception(f"Ошибка при импорте данных фигуры: {e}")
+        except Exception as exc:
+            logger.exception("Ошибка при импорте данных фигуры: %s", exc)
 
     def _get_or_create_figure(self) -> BaseFigureModel:
         """Получение или создание базовой фигуры"""
@@ -409,7 +434,7 @@ class BaseFigureHandler(BaseHandler):
 
         figure_data = self.api.get_figure_data(self.figure_id)
         if not figure_data:
-            logger.error(f"Нет данных для фигуры ID {self.figure_id}")
+            logger.error("Нет данных для фигуры ID  %s", self.figure_id)
             raise ValueError(f"Invalid figure ID: {self.figure_id}")
 
         return BaseFigureModel.objects.create(
@@ -422,7 +447,7 @@ class BaseFigureHandler(BaseHandler):
 
     def _import_figure_results(self) -> None:
         """Импорт результатов для фигуры"""
-        logger.info(f"Начинаем импорт фигуры {self.figure.title}")
+        logger.info("Начинаем импорт фигуры %s", self.figure.title)
         figure_data = self.api.get_figure_data(self.figure.id)
 
         for result_data in figure_data.get("results", []):
@@ -481,6 +506,7 @@ class BaseFigureHandler(BaseHandler):
     def _log_import_results(self) -> None:
         """Логирование результатов импорта"""
         logger.info(
-            f"Импорт фигуры {self.figure.title} завершен. "
-            f"Новые результаты: {self.changes['new_result']}"
+            "Импорт фигуры %s завершен. Новые результаты:\n %s",
+            self.figure.title,
+            self.changes.get("new_result", 0),
         )
