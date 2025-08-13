@@ -1,9 +1,10 @@
 import logging
 
+from django.db.models import QuerySet
 
 from core import celery_app
 from g_cup_site.models import AthleteModel
-from g_cup_site.utils import StageGGPHandeler, BaseFigureHandler, APIGetter
+from g_cup_site.utils import APIGetter, BaseFigureHandler, StageGGPHandeler
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ def base_figure_update(figure_id: int):
 def update_all_athletes_info():
     api = APIGetter()
     count = 0
-    athletes: list[AthleteModel] = AthleteModel.objects.all()
+    athletes: QuerySet[AthleteModel] = AthleteModel.objects.all()
     for athlete in athletes:
         fresh_athlete_data = api.get_athlete_data(athlete.id)
 

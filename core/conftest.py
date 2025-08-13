@@ -1,12 +1,13 @@
-import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
-from django.contrib.auth import get_user_model
-from telegram import Update, Message, User as TelegramUser, Chat
-from telegram.ext import ContextTypes
-from allauth.socialaccount.models import SocialAccount
-import pytest_asyncio
 
+import pytest
+import pytest_asyncio
+from allauth.socialaccount.models import SocialAccount
+from django.contrib.auth import get_user_model
+from telegram import Chat, Message, Update
+from telegram import User as TelegramUser
+from telegram.ext import ContextTypes
 from users.models import Report
 
 User = get_user_model()
@@ -22,7 +23,7 @@ def event_loop():
 async def django_user():
     """Создает тестового пользователя Django"""
 
-    user = await User.objects.acreate_user(
+    user = await User.objects.acreate_user(  # type: ignore
         username="test_user",
         email="test@example.com",
         password="password1234",
