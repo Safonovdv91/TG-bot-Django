@@ -11,13 +11,16 @@ def get_list_env(name: str) -> list[str]:
     return [item.strip() for item in os.getenv(name, "").split(",") if item.strip()]
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-# BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
+# BASE_DIR должен указывать на корень проекта (где manage.py), а не на core/
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-if (BASE_DIR / "../.env").exists():
-    load_dotenv(".env")
-else:
-    load_dotenv(BASE_DIR / "../.env.prod")
+# Загружаем .env файл если он существует
+env_file = BASE_DIR / ".env"
+if not env_file.exists():
+    env_file = BASE_DIR / ".env.prod"
+
+if env_file.exists():
+    load_dotenv(env_file)
 
 
 SECRET_KEY: str | None = os.environ.get("DJANGO_SECRET_KEY")
@@ -26,6 +29,7 @@ SITE_ID: str | None = os.environ.get("DJANGO_SITE_ID")
 ALLOWED_HOSTS = get_list_env("DJANGO_ALLOWED_HOSTS")
 CSRF_TRUSTED_ORIGINS = get_list_env("CSRF_TRUSTED_ORIGINS")
 CORS_ALLOWED_ORIGINS = get_list_env("CORS_ALLOWED_ORIGINS")
+
 
 
 INTERNAL_IPS: list[str] = ["127.0.0.1"]
@@ -96,22 +100,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "core.wsgi.application"
 
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME"),
-        "USER": os.environ.get("DB_USER"),
-        "PASSWORD": os.environ.get("DB_PASSWORD"),
-        "HOST": os.environ.get("DB_HOST"),
-        "PORT": os.environ.get("DB_PORT", default="5432"),
-        "ATOMIC_REQUESTS": True,
-    }
-}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -203,3 +191,4 @@ CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
 CELERY_RESULT_EXTENDED = True
+
