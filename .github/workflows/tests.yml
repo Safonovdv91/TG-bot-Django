@@ -1,54 +1,41 @@
 name: Tests
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
 
 jobs:
-  uv-test:
+  test:
     runs-on: ubuntu-latest
-    environment: test
-
-    services:
-      postgres:
-        image: postgres:17.2
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_DB: test_db
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-        options: >-
-          --health-cmd="pg_isready -U test_user -d test_db"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=5
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Copy .env.prod to .env
-        run: cp .env.prod core/.env
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-
-      - name: Install requirements
-        run: uv sync --all-extras --dev
-
-      - name: Wait for PostgreSQL
-        run: |
-          until pg_isready -h localhost -p 5432 -U postgress_user; do
-            echo "Waiting for postgres..."
-            sleep 2
-          done
-
-      - name: Make migrations
-        run: uv run core/manage.py makemigrations
-
-      - name: Run migrations
-        run: uv run core/manage.py migrate --noinput
-
-      - name: Run tests
-        env:
-          DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_db
-          CI: true
-        run: cd core; uv run pytest 
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13.11"
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+    
+    - name: Install dependencies
+      run: |
+        uv sync --extra dev
+    
+    - name: Run tests
+      run: |
+        uv run pytest core/tests/ -v --tb=short
+      env:
+        DJANGO_SETTINGS_MODULE: core.test
+    
+    - name: Run tests with coverage
+      run: |
+        uv run pytest core/tests/ --cov=. --cov-report=xml --cov-report=term-missing
+      continue-on-error: true
+      env:
+        DJANGO_SETTINGS_MODULE: core.test

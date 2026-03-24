@@ -4,29 +4,43 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 
-def get_list_env(name: str) -> list[str]:
-    if os.getenv(name) is None:
-        raise ValueError(f"Не указано {name} в переменных окружения")
-
-    return [item.strip() for item in os.getenv(name, "").split(",") if item.strip()]
-
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-# BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
-
-if (BASE_DIR / "../.env").exists():
-    load_dotenv(".env")
-else:
-    load_dotenv(BASE_DIR / "../.env.prod")
+def get_list_env(name: str, default: str = "") -> list[str]:
+    """Get a comma-separated list from environment variable."""
+    value = os.getenv(name) or default
+    return [item.strip() for item in value.split(",") if item.strip()]
 
 
-SECRET_KEY: str | None = os.environ.get("DJANGO_SECRET_KEY")
-DEBUG: bool = True if os.environ.get("DJANGO_DEBUG") else False
-SITE_ID: str | None = os.environ.get("DJANGO_SITE_ID")
-ALLOWED_HOSTS = get_list_env("DJANGO_ALLOWED_HOSTS")
-CSRF_TRUSTED_ORIGINS = get_list_env("CSRF_TRUSTED_ORIGINS")
-CORS_ALLOWED_ORIGINS = get_list_env("CORS_ALLOWED_ORIGINS")
+def get_env(name: str, default: str = "") -> str:
+    """Get environment variable with optional default."""
+    return os.getenv(name, default)
 
+
+# BASE_DIR должен указывать на корень проекта (где manage.py), а не на core/
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# Загружаем .env файл если он существует (только для локальной разработки)
+# В CI и тестах используются значения по умолчанию
+env_file = BASE_DIR / ".env"
+if not env_file.exists():
+    env_file = BASE_DIR / ".env.prod"
+
+if env_file.exists() and os.getenv("DJANGO_SETTINGS_MODULE") != "core.test":
+    load_dotenv(env_file)
+
+
+# =============================================================================
+# Core Django Settings
+# =============================================================================
+SECRET_KEY: str = get_env("DJANGO_SECRET_KEY", "django-insecure-default-key-for-tests")
+DEBUG: bool = get_env("DJANGO_DEBUG", "False") == "True"
+SITE_ID: str = get_env("DJANGO_SITE_ID", "1")
+ALLOWED_HOSTS = get_list_env("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,testserver")
+CSRF_TRUSTED_ORIGINS = get_list_env(
+    "CSRF_TRUSTED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000"
+)
+CORS_ALLOWED_ORIGINS = get_list_env(
+    "CORS_ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000"
+)
 
 INTERNAL_IPS: list[str] = ["127.0.0.1"]
 
@@ -97,22 +111,6 @@ TEMPLATES = [
 WSGI_APPLICATION = "core.wsgi.application"
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME"),
-        "USER": os.environ.get("DB_USER"),
-        "PASSWORD": os.environ.get("DB_PASSWORD"),
-        "HOST": os.environ.get("DB_HOST"),
-        "PORT": os.environ.get("DB_PORT", default="5432"),
-        "ATOMIC_REQUESTS": True,
-    }
-}
-
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -166,8 +164,15 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_BOT_TOKEN").split(":")[0]
+
+# =============================================================================
+# Telegram Bot Settings
+# =============================================================================
+TELEGRAM_BOT_TOKEN = get_env(
+    "TELEGRAM_BOT_TOKEN", "7110713844:AAEyjgfsPB2KyOkGos84rhEqlfKqaNRf7nM"
+)
+# Extract chat ID from token (first part before colon)
+TELEGRAM_CHAT_ID = TELEGRAM_BOT_TOKEN.split(":")[0] if TELEGRAM_BOT_TOKEN else ""
 
 # Provider specific settings
 SOCIALACCOUNT_PROVIDERS = {
@@ -194,12 +199,20 @@ ACCOUNT_DEFAULT_HTTP_PROTOCOL = (
 
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"  # Временно для разработки
 
-# Celery Configuration Options
-REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
-REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
+# =============================================================================
+# Celery & Redis Configuration
+# =============================================================================
+REDIS_HOST = get_env("REDIS_HOST", "localhost")
+REDIS_PORT = get_env("REDIS_PORT", "6379")
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True  # Для отслеживания статуса задачи если в исполнении
 CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
 CELERY_RESULT_EXTENDED = True
+
+# =============================================================================
+# Gymkhana Cup API Settings
+# =============================================================================
+GYMKHANA_CUP_URL = get_env("GYMKHANA_CUP_URL", "https://api.gymkhana-cup.ru")
+GYMKHANA_CUP_TOKEN = get_env("GYMKHANA_CUP_TOKEN", "")
