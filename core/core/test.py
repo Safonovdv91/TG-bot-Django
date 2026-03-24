@@ -67,9 +67,7 @@ TELEGRAM_BOT_TOKEN = os.getenv(
 
 # Gymkhana Cup API
 GYMKHANA_CUP_URL = os.getenv("GYMKHANA_CUP_URL", "https://api.gymkhana-cup.ru")
-GYMKHANA_CUP_TOKEN = os.getenv(
-    "GYMKHANA_CUP_TOKEN", "test_token_for_ci_pipeline"
-)
+GYMKHANA_CUP_TOKEN = os.getenv("GYMKHANA_CUP_TOKEN", "test_token_for_ci_pipeline")
 
 # =============================================================================
 # Redis & Celery

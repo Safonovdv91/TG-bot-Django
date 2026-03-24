@@ -25,9 +25,7 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
     )
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
-    )
+    config.addinivalue_line("markers", "integration: marks tests as integration tests")
     config.addinivalue_line("markers", "unit: marks tests as unit tests")
     config.addinivalue_line(
         "markers", "no_db_cleanup: skip database cleanup after test"
@@ -38,6 +36,6 @@ def pytest_sessionstart(session):
     """Called after the Session object has been created."""
     print("\n" + "=" * 70)
     print("Pytest session started")
-    print(f"Django settings: {os.environ.get('DJANGO_SETTINGS_MODULE', 'Not set')}")
-    print(f"Database: Using in-memory SQLite (no external DB required)")
+    print("Django settings: %s", os.environ.get("DJANGO_SETTINGS_MODULE", "Not set"))
+    print("Database: Using in-memory SQLite (no external DB required)")
     print("=" * 70 + "\n")

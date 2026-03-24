@@ -216,4 +216,3 @@ CELERY_RESULT_EXTENDED = True
 # =============================================================================
 GYMKHANA_CUP_URL = get_env("GYMKHANA_CUP_URL", "https://api.gymkhana-cup.ru")
 GYMKHANA_CUP_TOKEN = get_env("GYMKHANA_CUP_TOKEN", "")
-

@@ -3,6 +3,7 @@ Telegram fixtures для тестов.
 
 Содержит фикстуры для тестирования telegram_bot.
 """
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from django.contrib.auth import get_user_model
@@ -29,7 +30,7 @@ def mock_register_report():
 def telegram_update():
     """
     Мок объекта Update из python-telegram-bot.
-    
+
     Не требует базы данных.
     """
     update = MagicMock()
@@ -50,7 +51,7 @@ def telegram_update():
 def telegram_context():
     """
     Мок объекта ContextTypes.DEFAULT_TYPE из python-telegram-bot.
-    
+
     Не требует базы данных.
     """
     context = MagicMock()
@@ -63,14 +64,12 @@ def telegram_context():
 def django_user(db):
     """
     Создает тестового пользователя Django.
-    
+
     Требует базу данных (используйте @pytest.mark.django_db).
     """
     User = get_user_model()
     user = User.objects.create_user(
-        username="testuser",
-        email="test@example.com",
-        password="testpass123"
+        username="testuser", email="test@example.com", password="testpass123"
     )
     return user
 
@@ -79,7 +78,7 @@ def django_user(db):
 def created_report(django_user, sample_report_data):
     """
     Созданный отчет в базе данных.
-    
+
     Требует базу данных и пользователя.
     """
     return Report.objects.create(

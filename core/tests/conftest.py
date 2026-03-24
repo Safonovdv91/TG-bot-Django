@@ -3,6 +3,7 @@ Configuration file for pytest tests in core/tests/.
 
 Содержит фикстуры и настройку для тестов.
 """
+
 import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock, MagicMock
@@ -16,6 +17,7 @@ User = get_user_model()
 # =============================================================================
 # Telegram Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def telegram_update():
@@ -53,6 +55,7 @@ def telegram_context():
 def sample_report_data():
     """Пример данных для отчета"""
     from users.models import TypeReport, SourceReports
+
     return {
         "text": "Это тестовый отчет о баге в системе",
         "type_report": TypeReport.BUG,
@@ -70,6 +73,7 @@ def mock_register_report():
 # Database Fixtures
 # =============================================================================
 
+
 @pytest_asyncio.fixture
 async def django_user(db):
     """
@@ -81,11 +85,7 @@ async def django_user(db):
         email="test@example.com",
         password="password1234",
     )
-    await SocialAccount.objects.acreate(
-        user=user,
-        provider="telegram",
-        uid=123456789
-    )
+    await SocialAccount.objects.acreate(user=user, provider="telegram", uid=123456789)
     return user
 
 
