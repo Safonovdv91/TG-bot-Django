@@ -1,5 +1,5 @@
-# Базовый образ с Python 3.13 c uv
-FROM python:3.13-slim as builder
+# Базовый образ с Python 3.13.11 c uv
+FROM python:3.13.11-slim as builder
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
@@ -8,7 +8,7 @@ COPY pyproject.toml .
 RUN uv lock && uv sync --frozen
 
 # Финальный образ
-FROM python:3.13-slim
+FROM python:3.13.11-slim
 
 WORKDIR /app
 
