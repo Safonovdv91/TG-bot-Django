@@ -5,11 +5,18 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from users.models import Report, SourceReports, TypeReport
 
+
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
 def get_telegram_id(user) -> int | None:
+
+    if user is None:
+        return None
+
+    if type(user) is not User:
+        raise ValueError("Получен запрос пользователя неверный")
     try:
         social_account = SocialAccount.objects.get(user=user, provider="telegram")
         return social_account.extra_data.get("id")
@@ -17,11 +24,20 @@ def get_telegram_id(user) -> int | None:
         return None
 
 
-def get_user_by_telegram_id(telegram_id: int) -> User | None:
+def get_user_by_telegram_id(telegram_id: int | str | None) -> User | None:
+    if telegram_id is None:
+        return None
+
+    if type(telegram_id) not in (int, str):
+        raise ValueError("Получено неверное значение telegram_id: %s", telegram_id)
+    
     try:
-        social_account = SocialAccount.objects.get(provider="telegram", uid=telegram_id)
+        tg_id = int(telegram_id)
+        social_account = SocialAccount.objects.get(provider="telegram", uid=tg_id)
         return social_account.user
     except SocialAccount.DoesNotExist:
+        return None
+    except ValueError:
         return None
 
 
