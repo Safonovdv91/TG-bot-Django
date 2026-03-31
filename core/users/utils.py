@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 def get_telegram_id(user) -> int | None:
-
     if user is None:
         return None
 
@@ -30,7 +29,7 @@ def get_user_by_telegram_id(telegram_id: int | str | None) -> User | None:
 
     if type(telegram_id) not in (int, str):
         raise ValueError("Получено неверное значение telegram_id: %s", telegram_id)
-    
+
     try:
         tg_id = int(telegram_id)
         social_account = SocialAccount.objects.get(provider="telegram", uid=tg_id)
@@ -121,19 +120,19 @@ class AdminNotifier:
         """Получение контактов администратора"""
         try:
             admin = await User.objects.filter(is_superuser=True).afirst()
-            
+
             if admin is None:
                 return ""
-            
+
             social_account = await admin.socialaccount_set.filter(
                 provider="telegram"
             ).afirst()
-            
-            return (
-                f"@{social_account.extra_data.get('username')}"
-                if social_account
-                else ""
-            )
+            result = social_account.extra_data.get("username")
+
+            return f"@{result}" if result else ""
+        except ConnectionError:
+            logger.exception("Получена ошибка подключения к базе данных")
+            return ""
         except Exception as e:
             logger.error(f"Admin contact error: {str(e)}")
             return ""
