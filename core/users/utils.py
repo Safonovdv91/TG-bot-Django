@@ -121,9 +121,14 @@ class AdminNotifier:
         """Получение контактов администратора"""
         try:
             admin = await User.objects.filter(is_superuser=True).afirst()
+            
+            if admin is None:
+                return ""
+            
             social_account = await admin.socialaccount_set.filter(
                 provider="telegram"
             ).afirst()
+            
             return (
                 f"@{social_account.extra_data.get('username')}"
                 if social_account
