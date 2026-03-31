@@ -90,6 +90,11 @@ async def register_report(telegram_id: int, text: str, type_report: TypeReport) 
 
     if not success:
         admin_contact = await AdminNotifier.get_admin_contacts()
+        if admin_contact == "":
+            message += " К сожалению администратор пропал, непонятно как это вышло но раз так, то заявите о баге"
+            logger.error(
+                "Произола ошибка с получением данных о администраторе, администратор не найден!"
+            )
         message += f"\nСвяжитесь с администратором: {admin_contact}"
 
     return message

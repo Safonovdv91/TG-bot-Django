@@ -98,7 +98,11 @@ class TestRegisterReport:
     @patch("telegram_bot.keyboard.ReportHandler.handle_report")
     @patch("users.utils.AdminNotifier.get_admin_contacts")
     async def test_register_report_failure_adds_admin_contact(
-        self, mock_get_admin, mock_handle_report, mock_get_user, django_user_with_telegram
+        self,
+        mock_get_admin,
+        mock_handle_report,
+        mock_get_user,
+        django_user_with_telegram,
     ):
         """Тест: при ошибке добавляет контакт админа"""
         # Arrange
