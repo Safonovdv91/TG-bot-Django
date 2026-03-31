@@ -87,6 +87,7 @@ async def django_user(db):
     )
     return user
 
+
 @pytest_asyncio.fixture
 async def django_user_with_telegram(db):
     """
@@ -99,12 +100,13 @@ async def django_user_with_telegram(db):
         password="password189000981",
     )
     await SocialAccount.objects.acreate(
-        user=user, 
-        provider="telegram", 
+        user=user,
+        provider="telegram",
         uid=189000981,
-        extra_data={"id": 189000981}  # TG id пользователя
+        extra_data={"id": 189000981},  # TG id пользователя
     )
     return user
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def cleanup_db():
