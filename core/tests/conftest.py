@@ -34,6 +34,7 @@ def telegram_update():
     message = MagicMock()
     message.text = "Тестовое сообщение"
     message.reply_text = AsyncMock()
+    message.reply_photo = AsyncMock()  # ← Добавлен AsyncMock для reply_photo
     update.message = message
 
     return update

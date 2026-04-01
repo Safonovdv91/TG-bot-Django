@@ -22,7 +22,7 @@ from telegram_bot.utils.math_calculate import (
 )
 from telegram_bot.utils.messages import MessageTimeTableFormatter
 from users.models import SourceReports, TypeReport
-from users.utils import get_user_by_telegram_id, ReportHandler
+from users.utils import AdminNotifier, get_user_by_telegram_id, ReportHandler
 
 logger = logging.getLogger(__name__)
 
@@ -145,9 +145,21 @@ class TrackHandler(BaseHandler):
     async def handle(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> States:
-        active_stage = await StageModel.objects.filter(
-            status__in=("judging", "accepting")
-        ).afirst()
+        """Ищет активный этап ГГП, и высылает ссылку на этап а так же фото трассы
+        возвращает основное меню.
+        """
+        try:
+            active_stage = await StageModel.objects.filter(
+                status__in=("judging", "accepting")
+            ).afirst()
+        except Exception as e:
+            logger.exception("Поймана ошибка при отправке активного этапа и ссылки на соревнования GGP \n %s",e)
+            admin_contacts = await AdminNotifier.get_admin_contacts()
+            await update.message.reply_text(
+                f"Обнаружена ошибка. Если проблема повторится, напишите: {admin_contacts}"
+                )
+
+            return States.MAIN_MENU
 
         if active_stage and active_stage.track_url:
             await update.message.reply_photo(
