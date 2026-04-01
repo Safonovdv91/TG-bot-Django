@@ -7,7 +7,6 @@ from telegram_bot.keyboard import TrackHandler
 from telegram_bot.states import States
 
 
-
 @pytest.mark.asyncio
 @pytest.mark.django_db
 class TestTrackHandler:
@@ -107,19 +106,21 @@ class TestTrackHandler:
             "Нет активных соревнований"
         )
 
-
     # TODO: Добавь тест на обработку исключений
-    @pytest.mark.parametrize("db_error",[
-        DatabaseError,IntegrityError,DataError
-        ])
+    @pytest.mark.parametrize("db_error", [DatabaseError, IntegrityError, DataError])
     @patch("telegram_bot.keyboard.logger")
     @patch("telegram_bot.keyboard.StageModel.objects.filter")
     async def test_handle_database_error(
-        self, mock_stage_filter,mock_logger,db_error, telegram_update, telegram_context
+        self,
+        mock_stage_filter,
+        mock_logger,
+        db_error,
+        telegram_update,
+        telegram_context,
     ):
         """
         Ошибка базы данных → метод НЕ падает.
-    
+
         Проверяет отказоустойчивость:
         - При возникновении исключения в БД (DatabaseError, IntegrityError, DataError)
         - Метод должен обработать ошибку
@@ -130,7 +131,7 @@ class TestTrackHandler:
 
         # Act
         handler = TrackHandler()
-        result = await handler.handle(telegram_update,telegram_context)
+        result = await handler.handle(telegram_update, telegram_context)
 
         # Assert
         assert result == States.MAIN_MENU

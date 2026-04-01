@@ -153,11 +153,14 @@ class TrackHandler(BaseHandler):
                 status__in=("judging", "accepting")
             ).afirst()
         except Exception as e:
-            logger.exception("Поймана ошибка при отправке активного этапа и ссылки на соревнования GGP \n %s",e)
+            logger.exception(
+                "Поймана ошибка при отправке активного этапа и ссылки на соревнования GGP \n %s",
+                e,
+            )
             admin_contacts = await AdminNotifier.get_admin_contacts()
             await update.message.reply_text(
                 f"Обнаружена ошибка. Если проблема повторится, напишите: {admin_contacts}"
-                )
+            )
 
             return States.MAIN_MENU
 
