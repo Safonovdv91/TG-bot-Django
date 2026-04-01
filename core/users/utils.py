@@ -4,6 +4,7 @@ from allauth.socialaccount.models import SocialAccount
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from users.models import Report, SourceReports, TypeReport
+from gymkhanagp.tasks import send_telegram_message_task
 
 
 User = get_user_model()
@@ -15,7 +16,7 @@ def get_telegram_id(user) -> int | None:
         return None
 
     if type(user) is not User:
-        raise ValueError("Получен запрос пользователя неверный")
+        raise ValueError("get_telegram_id: Полученный User is not type User")
     try:
         social_account = SocialAccount.objects.get(user=user, provider="telegram")
         return social_account.extra_data.get("id")
@@ -136,3 +137,28 @@ class AdminNotifier:
         except Exception as e:
             logger.error(f"Admin contact error: {str(e)}")
             return ""
+
+    @staticmethod
+    def notify_admin(message: str) -> bool:
+        """
+        Отправка уведомления администратору через Celery.
+
+        Аргументы:
+        - message: Текст сообщения для отправки
+
+        Возвращает:
+        - bool: True если задача успешно отправлена, False иначе
+
+        """
+        user = User.objects.filter(
+            is_superuser=True, is_active=True, socialaccount__provider="telegram"
+        ).first()
+
+        telegram_id: int = get_telegram_id(user)
+
+        send_telegram_message_task.delay(telegram_id, message)
+        return True
+
+        # TODO: Проверить, что Telegram ID существует
+        # TODO: Отправить сообщение через send_telegram_message_task.delay()
+        # TODO: Обработать исключения и вернуть результат
