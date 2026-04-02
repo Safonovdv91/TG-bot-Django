@@ -150,15 +150,33 @@ class AdminNotifier:
         - bool: True если задача успешно отправлена, False иначе
 
         """
-        user = User.objects.filter(
-            is_superuser=True, is_active=True, socialaccount__provider="telegram"
-        ).first()
+        try:
+            user = User.objects.filter(
+                is_superuser=True, is_active=True, socialaccount__provider="telegram"
+            ).first()
+        except Exception as e:
+            logger.exception(
+                "Ошибка получения администратора из базы данных", exc_info=e
+            )
+            return False
+
+        if user is None:
+            logger.error(
+                "При отправке уведомления администратору через telegramm"
+                " администратор c телеграмм не был обнаружен в БД"
+            )
+            return False
 
         telegram_id: int = get_telegram_id(user)
 
-        send_telegram_message_task.delay(telegram_id, message)
-        return True
+        try:
+            send_telegram_message_task.delay(telegram_id, message)
+        except Exception as e:
+            logger.exception(
+                "При создании таски по уведомлению пользователя было вызвано исключение:",
+                exc_info=e,
+            )
+            return False
 
-        # TODO: Проверить, что Telegram ID существует
-        # TODO: Отправить сообщение через send_telegram_message_task.delay()
-        # TODO: Обработать исключения и вернуть результат
+        logger.info("Администратоу выслано сообщение: %s", message)
+        return True

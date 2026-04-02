@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from users.utils import AdminNotifier
 
@@ -13,10 +13,13 @@ class TestAdminNotifierNotifyAdmin:
     через Celery задачу.
     """
 
+    @pytest.mark.parametrize(
+        "test_message", ["", "Good message", 10000 * "Very Big Message!!\n", None]
+    )
     @patch("users.utils.send_telegram_message_task")
     @pytest.mark.asyncio
     async def test_notify_admin_success_sends_message(
-        self, mock_send_task, django_admin_with_telegram
+        self, mock_send_task, django_admin_with_telegram, test_message
     ):
         """
         Администратор найден и активен → задача отправлена в Celery.
@@ -29,146 +32,140 @@ class TestAdminNotifierNotifyAdmin:
         - Метод возвращает True
         """
         # Arrange
-        # django_admin_with_telegram — это фикстура, pytest-asyncio сам обрабатывает await
-        django_admin_with_telegram
 
         # Act
-        result = AdminNotifier.notify_admin("Test message for admin")
+        result = AdminNotifier.notify_admin(test_message)
 
         # Assert
         assert result is True
-        mock_send_task.delay.assert_called_once_with(
-            666666666, "Test message for admin"
-        )
+        mock_send_task.delay.assert_called_once_with(666666666, test_message)
 
-    # @patch("users.utils.send_telegram_message_task")
-    # @patch("users.utils.get_telegram_id")
-    # def test_notify_admin_no_telegram_account(
-    #     self, mock_get_tg_id, mock_send_task, django_user
-    # ):
-    #     """
-    #     У администратора нет Telegram аккаунта → возвращает False.
+    @patch("users.utils.logger")
+    @patch("users.utils.send_telegram_message_task")
+    @pytest.mark.asyncio
+    async def test_notify_admin_no_telegram_account(
+        self, mock_send_task, mock_logger, django_superuser
+    ):
+        """
+        У администратора нет Telegram аккаунта → возвращает False.
 
-    #     Проверяет сценарий:
-    #     - Администратор существует
-    #     - У администратора НЕТ Telegram ID (get_telegram_id возвращает None)
-    #     - Celery задача НЕ вызывается
-    #     - Метод возвращает False
-    #     """
-    #     # Arrange
-    #     # TODO: Создай администратора
-    #     # TODO: Настрой mock_get_tg_id.return_value = None
+        Проверяет сценарий:
+        - Администратор существует
+        - У администратора НЕТ Telegram ID
+        - Celery задача НЕ вызывается
+        - Метод возвращает False
+        """
+        # Arrange
 
-    #     # Act
-    #     # TODO: Вызови AdminNotifier.notify_admin("Test message")
+        # Act
+        result = AdminNotifier.notify_admin("Test message")
 
-    #     # Assert
-    #     # TODO: Проверь, что результат == False
-    #     # TODO: Проверь, что mock_send_task.delay НЕ вызывался
-    #     pass
+        # Assert
 
-    # @patch("users.utils.send_telegram_message_task")
-    # @patch("users.utils.get_telegram_id")
-    # def test_notify_admin_user_not_active(
-    #     self, mock_get_tg_id, mock_send_task, django_user
-    # ):
-    #     """
-    #     Администратор не активен → возвращает False.
+        mock_send_task.delay.assert_not_called()
+        mock_logger.error.assert_called_once()
+        assert not result
 
-    #     Проверяет сценарий:
-    #     - Администратор существует
-    #     - Администратор НЕ активен (is_active=False)
-    #     - Celery задача НЕ вызывается
-    #     - Метод возвращает False
-    #     """
-    #     # Arrange
-    #     # TODO: Создай администратора с is_active=False
-    #     # TODO: Настрой mock_get_tg_id.return_value = 123456789
+    @patch("users.utils.logger")
+    @patch("users.utils.send_telegram_message_task")
+    @pytest.mark.asyncio
+    async def test_notify_admin_user_not_active(
+        self, mock_send_task, mock_logger, django_admin_with_telegram_not_active
+    ):
+        """
+        Администратор не активен → возвращает False.
 
-    #     # Act
-    #     # TODO: Вызови AdminNotifier.notify_admin("Test message")
+        Проверяет сценарий:
+        - Администратор существует
+        - Администратор НЕ активен (is_active=False)
+        - Celery задача НЕ вызывается
+        - Метод возвращает False
+        """
+        # Arrange
 
-    #     # Assert
-    #     # TODO: Проверь, что результат == False
-    #     # TODO: Проверь, что mock_send_task.delay НЕ вызывался
-    #     pass
+        # Act
+        result = AdminNotifier.notify_admin("Test message")
 
-    # @patch("users.utils.send_telegram_message_task")
-    # def test_notify_admin_no_admin_exists(
-    #     self, mock_send_task
-    # ):
-    #     """
-    #     В базе нет администратора → возвращает False.
+        # Assert
+        assert not result
+        mock_logger.error.assert_called_once()
+        mock_send_task.delay.assert_not_called()
 
-    #     Проверяет сценарий:
-    #     - В базе НЕТ пользователей с is_superuser=True
-    #     - Celery задача НЕ вызывается
-    #     - Метод возвращает False
-    #     """
-    #     # Arrange
-    #     # TODO: Не создавай администратора в базе
+    @patch("users.utils.logger")
+    @patch("users.utils.send_telegram_message_task")
+    @pytest.mark.asyncio
+    async def test_notify_admin_no_admin_exists(
+        self, mock_send_task, mock_logger, django_user
+    ):
+        """
+        В базе нет администратора → возвращает False.
 
-    #     # Act
-    #     # TODO: Вызови AdminNotifier.notify_admin("Test message")
+        Проверяет сценарий:
+        - В базе НЕТ пользователей с is_superuser=True
+        - Celery задача НЕ вызывается
+        - Метод возвращает False
+        """
+        # Arrange
 
-    #     # Assert
-    #     # TODO: Проверь, что результат == False
-    #     # TODO: Проверь, что mock_send_task.delay НЕ вызывался
-    #     pass
+        # Act
+        result = AdminNotifier.notify_admin("Test message")
 
-    # @patch("users.utils.send_telegram_message_task")
-    # @patch("users.utils.get_telegram_id")
-    # def test_notify_admin_celery_task_error(
-    #     self, mock_get_tg_id, mock_send_task, django_user
-    # ):
-    #     """
-    #     Ошибка при отправке Celery задачи → возвращает False.
+        # Assert
+        assert not result
+        mock_logger.error.assert_called_once()
+        mock_send_task.delay.assert_not_called()
 
-    #     Проверяет сценарий:
-    #     - Администратор существует и активен
-    #     - Telegram ID существует
-    #     - При вызове send_telegram_message_task.delay() возникает исключение
-    #     - Метод возвращает False (не падает!)
-    #     """
-    #     # Arrange
-    #     # TODO: Создай администратора
-    #     # TODO: Настрой mock_get_tg_id.return_value = 123456789
-    #     # TODO: Настрой mock_send_task.delay.side_effect = Exception("Celery error")
+    @pytest.mark.parametrize(
+        "type_error",
+        [Exception("DB error"), ConnectionError("DB error"), TimeoutError("DB error")],
+    )
+    @patch("users.utils.logger")
+    @patch("users.utils.send_telegram_message_task")
+    @pytest.mark.asyncio
+    async def test_notify_admin_celery_task_error(
+        self, mock_send_task, mock_logger, django_admin_with_telegram, type_error
+    ):
+        """
+        Ошибка при отправке Celery задачи → возвращает False.
 
-    #     # Act
-    #     # TODO: Вызови AdminNotifier.notify_admin("Test message")
+        Проверяет сценарий:
+        - Администратор существует и активен
+        - Telegram ID существует
+        - При вызове send_telegram_message_task.delay() возникает исключение
+        - Метод возвращает False (не падает!)
+        """
+        # Arrange
+        mock_send_task.delay.side_effect = type_error
 
-    #     # Assert
-    #     # TODO: Проверь, что результат == False
-    #     # TODO: Проверь, что метод НЕ упал с исключением
-    #     pass
+        # Act
+        result = AdminNotifier.notify_admin("Test message")
 
-    # @patch("users.utils.send_telegram_message_task")
-    # @patch("users.utils.get_telegram_id")
-    # def test_notify_admin_database_error(
-    #     self, mock_get_tg_id, mock_send_task, django_user
-    # ):
-    #     """
-    #     Ошибка базы данных при получении администратора → возвращает False.
+        # Assert
+        assert not result
+        mock_logger.exception.assert_called_once()
 
-    #     Проверяет сценарий:
-    #     - При запросе администратора возникает DatabaseError
-    #     - Метод возвращает False (не падает!)
-    #     """
-    #     # Arrange
-    #     # TODO: Настрой ошибку БД при получении администратора
-    #     # TODO: Используй patch для User.objects.filter
+    @pytest.mark.parametrize(
+        "type_error",
+        [Exception("DB error"), ConnectionError("DB error"), TimeoutError("DB error")],
+    )
+    @patch("users.utils.logger")
+    @patch("users.utils.User.objects.filter")
+    async def test_notify_admin_database_error(
+        self, mock_user_filter, mock_logger, django_admin_with_telegram, type_error
+    ):
+        """
+        Ошибка базы данных при получении администратора → возвращает False.
 
-    #     # Act
-    #     # TODO: Вызови AdminNotifier.notify_admin("Test message")
+        Проверяет сценарий:
+        - При запросе администратора возникает DatabaseError
+        - Метод возвращает False (не падает!)
+        """
+        # Arrange
+        mock_user_filter.return_value.first = MagicMock(side_effect=type_error)
 
-    #     # Assert
-    #     # TODO: Проверь, что результат == False
-    #     # TODO: Проверь, что метод НЕ упал с исключением
-    #     pass
+        # Act
+        result = AdminNotifier.notify_admin("Test message")
 
-    # # TODO: Подумай, какие ещё сценарии стоит протестировать
-    # # Например:
-    # # - Сообщение пустое или None
-    # # - Сообщение очень длинное
-    # # - Несколько администраторов в базе (какой выбирается?)
+        # Assert
+        assert not result
+        mock_logger.exception.assert_called_once()
