@@ -5,6 +5,7 @@ from telegram_bot.keyboard import TrackHandler, GGPSubscriptionHandler
 from telegram_bot.states import States
 
 
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
 async def test_track_handler_success():
     handler = TrackHandler()
@@ -26,6 +27,7 @@ async def test_track_handler_success():
         assert result == States.MAIN_MENU
 
 
+@pytest.mark.django_db
 @pytest.mark.asyncio
 async def test_ggp_subscription_flow():
     handler = GGPSubscriptionHandler()
