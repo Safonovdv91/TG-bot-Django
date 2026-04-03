@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 
 from allauth.socialaccount.models import SocialAccount
@@ -5,18 +6,19 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from users.models import Report, SourceReports, TypeReport
 from gymkhanagp.tasks import send_telegram_message_task
-
+from django.contrib.auth.models import AbstractBaseUser
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
 def get_telegram_id(user) -> int | None:
-    if user is None:
+    if type(user) is not User:
+        logger.error(
+            "Запрос пользователя который не User:\n %s \ntype: [%s]", user, type(user)
+        )
         return None
 
-    if type(user) is not User:
-        raise ValueError("get_telegram_id: Полученный User is not type User")
     try:
         social_account = SocialAccount.objects.get(user=user, provider="telegram")
         return social_account.extra_data.get("id")
@@ -24,7 +26,7 @@ def get_telegram_id(user) -> int | None:
         return None
 
 
-def get_user_by_telegram_id(telegram_id: int | str | None) -> User | None:
+def get_user_by_telegram_id(telegram_id: int | str | None) -> AbstractBaseUser | None:
     if telegram_id is None:
         return None
 
@@ -47,7 +49,7 @@ class BaseReportValidator:
     MIN_TEXT_LENGTH = 10
 
     def __init__(
-        self, user: User, text: str, source: str, report_type: TypeReport
+        self, user: AbstractBaseUser, text: str, source: str, report_type: TypeReport
     ) -> None:
         self.user = user
         self.text = text
@@ -95,15 +97,19 @@ class ReportHandler:
 
     @classmethod
     async def handle_report(
-        cls, user: User, text: str, source: SourceReports, type_report: TypeReport
+        cls,
+        user: AbstractBaseUser,
+        text: str,
+        source: SourceReports,
+        type_report: TypeReport,
     ) -> tuple[bool, str]:
         """Основной метод обработки отчета"""
         validator = BaseReportValidator(user, text, source, type_report)
         creator = ReportCreator(validator)
 
         try:
-            report = await creator.create_report(type_report)
-            logger.info(f"Created report: {report.id}")
+            report: Report = await creator.create_report(type_report)
+            logger.info(f"Created report: {report.pk}")
             return True, "✅ Отчет успешно сохранен!"
         except ValidationError as e:
             logger.warning(f"Validation error: {e}")

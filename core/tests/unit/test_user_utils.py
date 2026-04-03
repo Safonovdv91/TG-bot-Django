@@ -1,5 +1,5 @@
 import pytest
-
+from unittest.mock import patch
 from users.utils import get_telegram_id, get_user_by_telegram_id
 
 
@@ -67,6 +67,25 @@ class TestGetTelegramId:
         user_id: int | None = get_telegram_id(user)
 
         # Assert
+        assert user_id is None
+
+    @pytest.mark.parametrize(
+        "wrong_value", [None, {"id:123124"}, [], 1234.23, "some string"]
+    )
+    @patch("users.utils.logger")
+    async def test_telegram_user_id_wrong_value_input(self, mock_logger, wrong_value):
+        """
+        Тест передачи плохих значений в качестве аргумента.
+
+        Проверяет, что функция корректно обрабатывает плохие значения
+        и возвращает None без выбрасывания исключений.
+        Так же производит запись в логгер
+        """
+        # Act
+        user_id: int | None = get_telegram_id(wrong_value)
+
+        # Assert
+        mock_logger.error.assert_called_once()
         assert user_id is None
 
     async def test_telegram_user_id_none_input(self):
@@ -152,34 +171,16 @@ class TestGetTelegramUserById:
         # Assert
         assert get_user is None
 
-    async def test_telegram_user_by_id_invalid_type_raises_value_error(self):
+    @pytest.mark.parametrize("wrong_value", [[], {"id:12345"}, 123456.02])
+    async def test_telegram_user_by_id_invalid_type_raises_value_error(
+        self, wrong_value
+    ):
         """
         Тест передачи некорректного типа данных.
 
         Проверяет, что функция выбрасывает ValueError при передаче
         типов, отличных от int, str или None (списки, словари, объекты).
         """
-        # Act & Assert
-        with pytest.raises(ValueError):
-            get_user_by_telegram_id([])
 
-    async def test_telegram_user_by_id_invalid_type_dict_raises_value_error(self):
-        """
-        Тест передачи словаря в качестве telegram_id.
-
-        Дополнительный тест для проверки обработки словарей.
-        """
-        # Act & Assert
-        with pytest.raises(ValueError):
-            get_user_by_telegram_id({"id": 123456})
-
-    async def test_telegram_user_by_id_invalid_type_float_raises_value_error(self):
-        """
-        Тест передачи float в качестве telegram_id.
-
-        Проверяет, что float значения (даже целочисленные)
-        вызывают ValueError, так как ожидаются только int или str.
-        """
-        # Act & Assert
-        with pytest.raises(ValueError):
-            get_user_by_telegram_id(123456.0)
+        result = get_user_by_telegram_id(wrong_value)
+        assert not result
