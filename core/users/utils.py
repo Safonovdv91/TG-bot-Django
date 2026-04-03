@@ -1,12 +1,13 @@
 from __future__ import annotations
+
 import logging
 
 from allauth.socialaccount.models import SocialAccount
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
-from users.models import Report, SourceReports, TypeReport
-from gymkhanagp.tasks import send_telegram_message_task
 from django.contrib.auth.models import AbstractBaseUser
+from django.core.exceptions import ValidationError
+from gymkhanagp.tasks import send_telegram_message_task
+from users.models import Report, SourceReports, TypeReport
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -31,7 +32,8 @@ def get_user_by_telegram_id(telegram_id: int | str | None) -> AbstractBaseUser |
         return None
 
     if type(telegram_id) not in (int, str):
-        raise ValueError("Получено неверное значение telegram_id: %s", telegram_id)
+        logger.error("Получено неверное значение telegram_id: %s", telegram_id)
+        return None
 
     try:
         tg_id = int(telegram_id)

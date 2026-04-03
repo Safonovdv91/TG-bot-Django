@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 from users.utils import get_telegram_id, get_user_by_telegram_id
 
 
@@ -37,21 +38,20 @@ class TestGetTelegramId:
             ({122: 23}),  # Словарь
         ],
     )
-    async def test_telegram_user_id_bad_value_raises_value_error(self, value):
+    @patch("users.utils.logger")
+    async def test_telegram_user_id_bad_value_return_none(self, mock_logger, value):
         """
         Тест передачи некорректного типа данных.
 
-        Проверяет, что функция выбрасывает ValueError при передаче
-        объектов, не являющихся экземплярами User модели.
+        Проверяет, что функция возвращает None при передаче
+        объектов, не являющихся экземплярами User модели и ведет запись в лог.
 
-        Параметризовано для проверки различных типов:
-        - строка
-        - список
-        - словарь
         """
         # Act & Assert
-        with pytest.raises(ValueError):
-            get_telegram_id(value)
+        result = get_telegram_id(value)
+
+        assert not result
+        mock_logger.error.assert_called_once()
 
     async def test_telegram_user_id_user_has_no_telegram(self, django_user):
         """
@@ -172,15 +172,18 @@ class TestGetTelegramUserById:
         assert get_user is None
 
     @pytest.mark.parametrize("wrong_value", [[], {"id:12345"}, 123456.02])
+    @patch("users.utils.logger")
     async def test_telegram_user_by_id_invalid_type_raises_value_error(
-        self, wrong_value
+        self, mock_logger, wrong_value
     ):
         """
         Тест передачи некорректного типа данных.
 
-        Проверяет, что функция выбрасывает ValueError при передаче
+        Проверяет, что функция возвращает NONE при передаче
         типов, отличных от int, str или None (списки, словари, объекты).
         """
 
         result = get_user_by_telegram_id(wrong_value)
+
         assert not result
+        mock_logger.error.assert_called_once()
