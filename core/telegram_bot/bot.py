@@ -1,18 +1,18 @@
 import logging
 
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from telegram import Update
+from telegram.error import InvalidToken
 from telegram.ext import (
     Application,
     CommandHandler,
-    MessageHandler,
-    filters,
     ContextTypes,
     ConversationHandler,
+    MessageHandler,
+    filters,
 )
-from django.conf import settings
-from django.contrib.auth import get_user_model
-
-from telegram_bot.commands import start, bug_report, feature_report
+from telegram_bot.commands import bug_report, feature_report, start
 from telegram_bot.manager import KeyboardManager
 from telegram_bot.states import States
 
@@ -26,10 +26,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 def setup_bot():
-    application = Application.builder().token(settings.TELEGRAM_BOT_TOKEN).build()
+    logger.info("Запускаем настройку бота")
+    try:
+        application = Application.builder().token(settings.TELEGRAM_BOT_TOKEN).build()
+    except InvalidToken as e:
+        logger.exception("Неверный токен бота")
+        raise e
 
     keyboard_manager = KeyboardManager()
-
     conv_handler = ConversationHandler(
         entry_points=[
             MessageHandler(
@@ -68,5 +72,5 @@ def setup_bot():
             ),
         )
     )
-
+    logger.info("Бот успешно настроен, запускает в runtime")
     return application
