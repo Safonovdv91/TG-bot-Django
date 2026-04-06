@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from g_cup_site.utils import APIGetter, TypeChampionship
+from httpx import NetworkError
 
 
 @pytest.mark.django_db
@@ -74,6 +75,21 @@ class TestAPIGetterGetDataChampionship:
         result = self.api.get_data_championships(champ_type=TypeChampionship.GGP)
 
         mock_logger.warning.assert_called_once()
+        assert result == {}
+
+    @pytest.mark.parametrize("httpx_error", [TimeoutError, NetworkError])
+    @patch("g_cup_site.utils.logger")
+    @patch("g_cup_site.utils.httpx.get")
+    def test_get_data_championships_timeout_error(
+        self, mock_get, mock_logger, httpx_error
+    ):
+        """Тест получения ошибки соединения от httpx."""
+
+        mock_get.side_effect = MagicMock(side_effect=httpx_error)
+
+        result = self.api.get_data_championships(champ_type=TypeChampionship.GGP)
+
+        mock_logger.exception.assert_called_once()
         assert result == {}
 
 

@@ -45,15 +45,21 @@ class APIGetter:
         to_year: int | None = None,
     ):
         url = f"{self.url}/championships/list"
-        response = httpx.get(
-            url,
-            params={
-                "signature": self.api_key,
-                "types": champ_type,
-                "fromYear": from_year,
-                "toYear": to_year,
-            },
-        )
+        try:
+            response = httpx.get(
+                url,
+                params={
+                    "signature": self.api_key,
+                    "types": champ_type,
+                    "fromYear": from_year,
+                    "toYear": to_year,
+                },
+            )
+        except Exception as e:
+            logger.exception(
+                "При получении данны о чемпионатах произошла ошибка", exc_info=e
+            )
+            return {}
         logger.info("Server_respose [%s]\n[]%s", response.status_code, response.json())
         if response.status_code == 200:
             return response.json()
