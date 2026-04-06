@@ -9,18 +9,17 @@ import httpx
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from dotenv import load_dotenv
-
 from g_cup_site.models import (
-    StageModel,
-    MotorcycleModel,
-    CountryModel,
-    CityModel,
     AthleteModel,
-    StageResultModel,
     BaseFigureModel,
     BaseFigureSportsmanResultModel,
+    CityModel,
+    CountryModel,
+    MotorcycleModel,
+    StageModel,
+    StageResultModel,
 )
-from gymkhanagp.models import Subscription, SportsmanClassModel
+from gymkhanagp.models import SportsmanClassModel, Subscription
 from gymkhanagp.tasks import send_telegram_message_task
 from users.utils import get_telegram_id
 
@@ -41,7 +40,7 @@ class APIGetter:
 
     def get_data_championships(
         self,
-        champ_type: TypeChampionship,
+        champ_type: str,
         from_year: int | None = None,
         to_year: int | None = None,
     ):
@@ -55,13 +54,35 @@ class APIGetter:
                 "toYear": to_year,
             },
         )
+        logger.info("Server_respose [%s]\n[]%s", response.status_code, response.json())
         if response.status_code == 200:
             return response.json()
         else:
-            return {}
+            status_code = response.status_code
+            try:
+                error_body = response.json()
+            except Exception:
+                error_body = response.text
+
+        if 400 <= status_code <= 499:
+            logger.error(
+                "[%s] Не удалось выполнить запрос, получена ошибка клиента:\n%s",
+                response.status_code,
+                error_body,
+            )
+        elif 500 <= status_code <= 599:
+            logger.warning(
+                "[%s] Не удалось выполнить запрос, получена ошибка сервера:\n%s",
+                response.status_code,
+                error_body,
+            )
+        else:
+            logger.error("Получен странный статус код %s", response.status_code)
+
+        return response.json()
 
     def get_data_championships_by_id(
-        self, champ_id: int, champ_type: TypeChampionship = TypeChampionship.GGP.title
+        self, champ_id: int, champ_type: str = TypeChampionship.GGP
     ):
         url = f"{self.url}/championships/get"
         response = httpx.get(
