@@ -27,6 +27,13 @@ jobs:
       run: |
         uv sync --extra dev
 
+    - name: Create Django migrations
+      run: |
+        cd core
+        uv run python manage.py makemigrations --noinput
+      env:
+        DJANGO_SETTINGS_MODULE: core.test_settings
+
     - name: Run tests
       run: |
         uv run pytest core/tests/ -v --tb=short
