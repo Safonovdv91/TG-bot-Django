@@ -3,7 +3,7 @@ from django.urls import reverse
 from gymkhanagp.models import Subscription
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 class TestSubscriptionViews:
     def test_subscription_manage_authenticated(self, client, user):
         """Тест доступа к странице подписок для авторизованного пользователя"""

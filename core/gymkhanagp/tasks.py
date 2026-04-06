@@ -1,8 +1,9 @@
 import logging
 
 from asgiref.sync import async_to_sync
-from core import celery_app
 from telegram_bot.utils.messages import send_telegram_message
+
+from core import celery_app
 
 logger = logging.getLogger(__name__)
 

@@ -24,7 +24,7 @@ env_file = BASE_DIR / ".env"
 if not env_file.exists():
     env_file = BASE_DIR / ".env.prod"
 
-if env_file.exists() and os.getenv("DJANGO_SETTINGS_MODULE") != "core.test":
+if env_file.exists() and "test" not in os.getenv("DJANGO_SETTINGS_MODULE", ""):
     load_dotenv(env_file)
 
 

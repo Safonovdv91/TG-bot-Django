@@ -1,7 +1,7 @@
-from django.contrib.auth import get_user_model
-from django.db import models
+from __future__ import annotations
 
-User = get_user_model()
+from django.conf import settings
+from django.db import models
 
 
 class CompetitionTypeModel(models.Model):
@@ -40,8 +40,8 @@ class SportsmanClassModel(models.Model):
 
 
 class UserSubscription(models.Model):
-    user: User = models.OneToOneField(
-        User, on_delete=models.CASCADE, related_name="subscriptions"
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="subscriptions"
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата подписки")
     is_active = models.BooleanField(default=True, verbose_name="Активна ли подписка")

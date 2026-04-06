@@ -26,16 +26,18 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync --extra dev
-    
+
     - name: Run tests
       run: |
         uv run pytest core/tests/ -v --tb=short
       env:
-        DJANGO_SETTINGS_MODULE: core.test
-    
+        DJANGO_SETTINGS_MODULE: core.test_settings
+        TELEGRAM_BOT_TOKEN: test_bot_token_for_ci
+
     - name: Run tests with coverage
       run: |
         uv run pytest core/tests/ --cov=. --cov-report=xml --cov-report=term-missing
       continue-on-error: true
       env:
-        DJANGO_SETTINGS_MODULE: core.test
+        DJANGO_SETTINGS_MODULE: core.test_settings
+        TELEGRAM_BOT_TOKEN: test_bot_token_for_ci

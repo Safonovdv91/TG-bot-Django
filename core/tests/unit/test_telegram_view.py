@@ -73,21 +73,21 @@ class TestRegisterReport:
     @patch("users.utils.get_user_by_telegram_id")
     @patch("users.utils.ReportHandler.handle_report")
     async def test_register_report_success(
-        self, mock_handle_report, mock_get_user, django_user
+        self, mock_handle_report, mock_get_user, django_user_with_telegram
     ):
         """Тест: успешная регистрация отчета"""
         # Arrange
-        mock_get_user.return_value = django_user
+        mock_get_user.return_value = django_user_with_telegram
         mock_handle_report.return_value = (True, "✅ Отчет сохранен!")
 
         # Act
         result = await register_report(
-            telegram_id=123456789, text="Тестовый отчет", type_report=TypeReport.BUG
+            telegram_id=189000981, text="Тестовый отчет", type_report=TypeReport.BUG
         )
 
         # Assert
         mock_handle_report.assert_called_once_with(
-            user=django_user,
+            user=django_user_with_telegram,
             text="Тестовый отчет",
             source=SourceReports.TELEGRAM,
             type_report=TypeReport.BUG,
@@ -98,17 +98,21 @@ class TestRegisterReport:
     @patch("telegram_bot.keyboard.ReportHandler.handle_report")
     @patch("users.utils.AdminNotifier.get_admin_contacts")
     async def test_register_report_failure_adds_admin_contact(
-        self, mock_get_admin, mock_handle_report, mock_get_user, django_user
+        self,
+        mock_get_admin,
+        mock_handle_report,
+        mock_get_user,
+        django_user_with_telegram,
     ):
         """Тест: при ошибке добавляет контакт админа"""
         # Arrange
-        mock_get_user.return_value = django_user
+        mock_get_user.return_value = django_user_with_telegram
         mock_handle_report.return_value = (False, "❌ Ошибка валидации")
         mock_get_admin.return_value = "@admin"
 
         # Act
         result = await register_report(
-            telegram_id=123456789, text="Короткий текст", type_report=TypeReport.BUG
+            telegram_id=189000981, text="Короткий текст", type_report=TypeReport.BUG
         )
 
         # Assert

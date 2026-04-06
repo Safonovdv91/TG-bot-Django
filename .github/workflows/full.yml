@@ -78,4 +78,5 @@ jobs:
         env:
           DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_db
           CI: true
+          TELEGRAM_BOT_TOKEN: test_bot_token_for_ci
         run: cd core; uv run pytest 

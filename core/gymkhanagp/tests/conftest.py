@@ -5,17 +5,17 @@ from .factories import UserFactory, SportsmanClassFactory, SubscriptionFactory
 
 
 @pytest.fixture
-def user():
+def user(db):
     return UserFactory()
 
 
 @pytest.fixture
-def sportsman_class():
+def sportsman_class(db):
     return SportsmanClassFactory()
 
 
 @pytest.fixture
-def subscription():
+def subscription(db):
     return SubscriptionFactory()
 
 

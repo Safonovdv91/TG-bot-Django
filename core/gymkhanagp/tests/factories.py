@@ -1,6 +1,11 @@
 import factory
 from django.contrib.auth import get_user_model
-from gymkhanagp.models import UserSubscription, SportsmanClassModel, Subscription
+from gymkhanagp.models import (
+    UserSubscription,
+    SportsmanClassModel,
+    Subscription,
+    CompetitionTypeModel,
+)
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -29,17 +34,38 @@ class SportsmanClassFactory(factory.django.DjangoModelFactory):
     description = factory.Faker("sentence")
 
 
+class CompetitionTypeFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = CompetitionTypeModel
+
+    name = factory.Sequence(lambda n: f"Competition{n}")
+    description = factory.Faker("sentence")
+
+
 class UserSubscriptionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = UserSubscription
 
     user = factory.SubFactory(UserFactory)
 
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        """
+        переписываем метод создания, если подписки пользователя уже есть
+        то возвращаем их, если нет - то вызываем родительский метод.
+        """
+        user = kwargs.get("user")
+        if user and hasattr(user, "subscriptions"):
+            # UserSubscription already created by signal
+            return user.subscriptions
+        return super()._create(model_class, *args, **kwargs)
+
 
 class SubscriptionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Subscription
 
+    # Первое создание UserSubscription (от которого создадим все остальные подписки)
     user_subscription = factory.SubFactory(UserSubscriptionFactory)
     sportsman_class = factory.SubFactory(SportsmanClassFactory)
-    competition_type_id = 1
+    competition_type = factory.SubFactory(CompetitionTypeFactory)
