@@ -32,6 +32,7 @@ jobs:
         uv run pytest core/tests/ -v --tb=short
       env:
         DJANGO_SETTINGS_MODULE: core.test_settings
+        TELEGRAM_BOT_TOKEN: test_bot_token_for_ci
 
     - name: Run tests with coverage
       run: |
@@ -39,3 +40,4 @@ jobs:
       continue-on-error: true
       env:
         DJANGO_SETTINGS_MODULE: core.test_settings
+        TELEGRAM_BOT_TOKEN: test_bot_token_for_ci

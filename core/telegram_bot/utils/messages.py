@@ -5,6 +5,7 @@ import os
 
 from allauth.socialaccount.models import SocialAccount
 from asgiref.sync import sync_to_async
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser
 from telegram import Bot
@@ -15,7 +16,9 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
-TOKEN: str | None = os.getenv("TELEGRAM_BOT_TOKEN")
+TOKEN: str | None = getattr(
+    settings, "TELEGRAM_BOT_TOKEN", os.getenv("TELEGRAM_BOT_TOKEN")
+)
 
 if TOKEN is None:
     raise ValueError(
