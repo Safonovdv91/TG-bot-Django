@@ -14,7 +14,7 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 # Set default environment variables for tests (CI-friendly)
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.test")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.test_settings")
 os.environ.setdefault("DJANGO_DEBUG", "True")
 os.environ.setdefault("TELEGRAM_BOT_TOKEN", "test_bot_token_for_ci")
 os.environ.setdefault("GYMKHANA_CUP_TOKEN", "test_token_for_ci")
