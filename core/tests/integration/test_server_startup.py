@@ -2,12 +2,17 @@
 Tests to verify Django server can start successfully.
 """
 
+import os
 import subprocess
 import time
 import socket
 import pytest
 import urllib.request
 import urllib.error
+from pathlib import Path
+
+# Путь к директории core (где находится manage.py)
+CORE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Disable the cleanup_db fixture for these tests
 pytestmark = [pytest.mark.no_db_cleanup, pytest.mark.django_db]
@@ -55,12 +60,18 @@ class TestDjangoServerStartup:
     @pytest.mark.integration
     def test_manage_py_help_command(self):
         """Test that manage.py can execute commands (server can start)."""
+        env = {
+            **os.environ,
+            "DJANGO_SETTINGS_MODULE": "core.test_settings",
+            "TELEGRAM_BOT_TOKEN": "test_token_for_ci",
+        }
         result = subprocess.run(
             ["python", "manage.py", "--help"],
-            cwd="core",
+            cwd=CORE_DIR,
             capture_output=True,
             text=True,
             timeout=10,
+            env=env,
         )
         assert result.returncode == 0
         assert "runserver" in result.stdout
@@ -68,12 +79,18 @@ class TestDjangoServerStartup:
     @pytest.mark.integration
     def test_django_check_command(self):
         """Test that Django system check passes (prerequisite for server)."""
+        env = {
+            **os.environ,
+            "DJANGO_SETTINGS_MODULE": "core.test_settings",
+            "TELEGRAM_BOT_TOKEN": "test_token_for_ci",
+        }
         result = subprocess.run(
             ["python", "manage.py", "check"],
-            cwd="core",
+            cwd=CORE_DIR,
             capture_output=True,
             text=True,
             timeout=30,
+            env=env,
         )
         assert result.returncode == 0
         # Check for no errors (warnings are OK)
@@ -82,12 +99,18 @@ class TestDjangoServerStartup:
     @pytest.mark.integration
     def test_database_migrations_applied(self):
         """Test that database migrations can be applied."""
+        env = {
+            **os.environ,
+            "DJANGO_SETTINGS_MODULE": "core.test_settings",
+            "TELEGRAM_BOT_TOKEN": "test_token_for_ci",
+        }
         result = subprocess.run(
             ["python", "manage.py", "migrate", "--check"],
-            cwd="core",
+            cwd=CORE_DIR,
             capture_output=True,
             text=True,
             timeout=30,
+            env=env,
         )
         # Return code 0 means migrations are applied
         # Return code 1 means there are unapplied migrations (still OK for server start)
@@ -107,7 +130,7 @@ class TestDjangoServerStartup:
         # Start the server
         process = subprocess.Popen(
             ["python", "manage.py", "runserver", f"127.0.0.1:{port}"],
-            cwd="core",
+            cwd=CORE_DIR,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env={**os.environ, "DJANGO_SETTINGS_MODULE": "core.settings"},
