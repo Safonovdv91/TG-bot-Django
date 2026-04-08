@@ -13,7 +13,7 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
-def get_telegram_id(user) -> int | None:
+def get_telegram_id(user: AbstractBaseUser) -> int | None:
     if type(user) is not User:
         logger.error(
             "Запрос пользователя который не User:\n %s \ntype: [%s]", user, type(user)
@@ -175,7 +175,7 @@ class AdminNotifier:
             )
             return False
 
-        telegram_id: int = get_telegram_id(user)
+        telegram_id: int | None = get_telegram_id(user)
 
         try:
             send_telegram_message_task.delay(telegram_id, message)

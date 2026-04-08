@@ -1,21 +1,20 @@
 import logging
 from datetime import datetime
 
-from django.db.models import UniqueConstraint
-from django.utils import timezone
-
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from g_cup_site.utils import APIGetter
+from django.db.models import UniqueConstraint
+from django.utils import timezone
 from g_cup_site.models import (
-    ChampionshipModel,
-    StageModel,
     AthleteModel,
-    CountryModel,
+    ChampionshipModel,
     CityModel,
-    StageResultModel,
+    CountryModel,
     MotorcycleModel,
+    StageModel,
+    StageResultModel,
 )
+from g_cup_site.utils import APIGetter
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +62,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"Error during import: {str(e)}"))
             raise
 
-    def import_championships(self, api, champ_type, from_year, to_year):
+    def import_championships(self, api: APIGetter, champ_type, from_year, to_year):
         championships = api.get_data_championships(
             champ_type=champ_type, from_year=from_year, to_year=to_year
         )

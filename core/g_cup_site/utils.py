@@ -40,7 +40,7 @@ class APIGetter:
 
     def _make_request(self, url_endpoint: str, params: dict) -> dict:
         """Запрос данных с уведомлением и логированием ошибок"""
-        logger.info("Делаем запрос к /%s", url_endpoint)
+        logger.info("Делаем запрос к %s", url_endpoint)
 
         if self.url is None:
             logger.exception("Отсутствует адрес GYMKHANA_CUP_URL в os.environ")
@@ -58,6 +58,7 @@ class APIGetter:
             logger.info(
                 "Server response [%s] %s", response.status_code, response.json()
             )
+
             return response.json()
         else:
             status_code = response.status_code
@@ -80,6 +81,8 @@ class APIGetter:
                     response.status_code,
                     error_body,
                 )
+                error_msg = f"При запросе на сервер получена ошибка клиентского запроса[{status_code}]\n[{error_body}]"
+                AdminNotifier.notify_admin(message=error_msg)
             else:
                 logger.error("Получен странный статус код %s", response.status_code)
 
