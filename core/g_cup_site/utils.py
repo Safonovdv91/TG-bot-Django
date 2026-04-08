@@ -21,7 +21,7 @@ from g_cup_site.models import (
 )
 from gymkhanagp.models import SportsmanClassModel, Subscription
 from gymkhanagp.tasks import send_telegram_message_task
-from users.utils import get_telegram_id
+from users.utils import AdminNotifier, get_telegram_id
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -38,30 +38,26 @@ class APIGetter:
         self.url = os.environ.get("GYMKHANA_CUP_URL")
         self.api_key = os.environ.get("GYMKHANA_CUP_TOKEN")
 
-    def get_data_championships(
-        self,
-        champ_type: str,
-        from_year: int | None = None,
-        to_year: int | None = None,
-    ):
-        url = f"{self.url}/championships/list"
-        try:
-            response = httpx.get(
-                url,
-                params={
-                    "signature": self.api_key,
-                    "types": champ_type,
-                    "fromYear": from_year,
-                    "toYear": to_year,
-                },
-            )
-        except Exception as e:
-            logger.exception(
-                "При получении данны о чемпионатах произошла ошибка", exc_info=e
-            )
+    def _make_request(self, url_endpoint: str, params: dict) -> dict:
+        """Запрос данных с уведомлением и логированием ошибок"""
+        logger.info("Делаем запрос к /%s", url_endpoint)
+
+        if self.url is None:
+            logger.exception("Отсутствует адрес GYMKHANA_CUP_URL в os.environ")
             return {}
-        logger.info("Server_respose [%s]\n[]%s", response.status_code, response.json())
+
+        url: str = self.url + url_endpoint
+        full_params = {"signature": self.api_key, **params}
+        try:
+            response = httpx.get(url, params=full_params)
+        except Exception as e:
+            logger.exception("Ошибка при запросе к %s", url_endpoint, exc_info=e)
+            return {}
+
         if response.status_code == 200:
+            logger.info(
+                "Server response [%s] %s", response.status_code, response.json()
+            )
             return response.json()
         else:
             status_code = response.status_code
@@ -70,22 +66,39 @@ class APIGetter:
             except Exception:
                 error_body = response.text
 
-        if 400 <= status_code <= 499:
-            logger.error(
-                "[%s] Не удалось выполнить запрос, получена ошибка клиента:\n%s",
-                response.status_code,
-                error_body,
-            )
-        elif 500 <= status_code <= 599:
-            logger.warning(
-                "[%s] Не удалось выполнить запрос, получена ошибка сервера:\n%s",
-                response.status_code,
-                error_body,
-            )
-        else:
-            logger.error("Получен странный статус код %s", response.status_code)
+            if 400 <= status_code <= 499:
+                logger.error(
+                    "Не удалось выполнить запрос, получена ошибка клиента[%s]:\n%s",
+                    response.status_code,
+                    error_body,
+                )
+                error_msg = f"При запросе на сервер получена ошибка клиентского запроса[{status_code}]\n[{error_body}]"
+                AdminNotifier.notify_admin(message=error_msg)
+            elif 500 <= status_code <= 599:
+                logger.warning(
+                    "Не удалось выполнить запрос, получена ошибка сервера[%s]:\n%s",
+                    response.status_code,
+                    error_body,
+                )
+            else:
+                logger.error("Получен странный статус код %s", response.status_code)
 
-        return response.json()
+            return {}
+
+    def get_data_championships(
+        self,
+        champ_type: str,
+        from_year: int | None = None,
+        to_year: int | None = None,
+    ):
+        return self._make_request(
+            "/championships/list",
+            {
+                "types": champ_type,
+                "fromYear": from_year,
+                "toYear": to_year,
+            },
+        )
 
     def get_data_championships_by_id(
         self, champ_id: int, champ_type: str = TypeChampionship.GGP
