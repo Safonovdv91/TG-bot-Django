@@ -180,3 +180,4 @@ core/static/
 migrations
 .vscode/
 .pylintrc
+docs/*.md
