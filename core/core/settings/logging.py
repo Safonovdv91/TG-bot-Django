@@ -15,15 +15,29 @@ LOGGING = {
             "format": "{levelname} {asctime} {name} - {message}",
             "style": "{",
         },
-        "django-server": {
-            "format": "{asctime} [{levelname}] {name}: {message}",
-            "style": "{",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
-        },
         "colored": {
-            "format": "{levelname}: {asctime} {name} — {message}",
-            "style": "{",
+            "()": "colorlog.ColoredFormatter",
+            "format": "%(log_color)s%(levelname)-8s%(reset)s %(asctime)s %(bold_white)s%(name)s%(reset)s — %(message)s",
             "datefmt": "%H:%M:%S",
+            "log_colors": {
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "bold_red",
+            },
+        },
+        "django-server": {
+            "()": "colorlog.ColoredFormatter",
+            "format": "%(log_color)s%(asctime)s [%(levelname)-5s] %(bold_white)s%(name)s%(reset)s: %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+            "log_colors": {
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "bold_red",
+            },
         },
     },
     "filters": {
@@ -42,11 +56,11 @@ LOGGING = {
             "formatter": "colored",
             "filters": ["require_debug_true"],
         },
-        # Консоль для production/Docker (без фильтра DEBUG)
+        # Консоль для production/Docker (с цветами)
         "console_prod": {
             "level": "INFO",
             "class": "logging.StreamHandler",
-            "formatter": "django-server",
+            "formatter": "colored",
         },
     },
     "loggers": {

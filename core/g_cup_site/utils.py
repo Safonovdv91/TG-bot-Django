@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 from abc import abstractmethod
 from datetime import datetime
 from enum import EnumType
@@ -9,20 +10,19 @@ import httpx
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from dotenv import load_dotenv
-
 from g_cup_site.models import (
-    StageModel,
-    MotorcycleModel,
-    CountryModel,
-    CityModel,
     AthleteModel,
-    StageResultModel,
     BaseFigureModel,
     BaseFigureSportsmanResultModel,
+    CityModel,
+    CountryModel,
+    MotorcycleModel,
+    StageModel,
+    StageResultModel,
 )
-from gymkhanagp.models import Subscription, SportsmanClassModel
+from gymkhanagp.models import SportsmanClassModel, Subscription
 from gymkhanagp.tasks import send_telegram_message_task
-from users.utils import get_telegram_id
+from users.utils import AdminNotifier, get_telegram_id
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -39,82 +39,118 @@ class APIGetter:
         self.url = os.environ.get("GYMKHANA_CUP_URL")
         self.api_key = os.environ.get("GYMKHANA_CUP_TOKEN")
 
+    REQUEST_TIMEOUT = 30.0  # секунды
+
+    def _make_request(self, url_endpoint: str, params: dict) -> dict:
+        """Запрос данных с уведомлением и логированием ошибок"""
+        if self.url is None:
+            logger.error("Отсутствует адрес GYMKHANA_CUP_URL в os.environ")
+            return {}
+
+        url: str = self.url + url_endpoint
+        full_params = {"signature": self.api_key, **params}
+
+        logger.info("Запрос к %s", url_endpoint)
+        start_time = time.monotonic()
+
+        try:
+            response = httpx.get(url, params=full_params, timeout=self.REQUEST_TIMEOUT)
+        except Exception as e:
+            elapsed = time.monotonic() - start_time
+            logger.exception(
+                "Ошибка при запросе к %s (время: %.2f сек)",
+                url_endpoint,
+                elapsed,
+                exc_info=e,
+            )
+            return {}
+
+        elapsed = time.monotonic() - start_time
+
+        if response.status_code == 200:
+            data = response.json()
+            logger.debug("Response body: %s", data)
+            logger.info(
+                "Успешный запрос к %s, статус %s, время: %.2f сек",
+                url_endpoint,
+                response.status_code,
+                elapsed,
+            )
+            return data
+
+        status_code = response.status_code
+        try:
+            error_body = response.json()
+        except Exception:
+            error_body = response.text
+
+        if 400 <= status_code <= 499:
+            logger.error(
+                "Ошибка клиента при запросе к %s [%s]:\n%s",
+                url_endpoint,
+                status_code,
+                error_body,
+            )
+            error_msg = (
+                f"Ошибка клиентского запроса к {url_endpoint} [{status_code}]\n"
+                f"{error_body}"
+            )
+            AdminNotifier.notify_admin(message=error_msg)
+        elif 500 <= status_code <= 599:
+            logger.warning(
+                "Ошибка сервера при запросе к %s [%s]:\n%s",
+                url_endpoint,
+                status_code,
+                error_body,
+            )
+            error_msg = (
+                f"Ошибка сервера при запросе к {url_endpoint} [{status_code}]\n"
+                f"{error_body}"
+            )
+            AdminNotifier.notify_admin(message=error_msg)
+        else:
+            logger.error(
+                "Получен странный статус код %s при запросе к %s",
+                status_code,
+                url_endpoint,
+            )
+
+        return {}
+
     def get_data_championships(
         self,
-        champ_type: TypeChampionship,
+        champ_type: str,
         from_year: int | None = None,
         to_year: int | None = None,
     ):
-        url = f"{self.url}/championships/list"
-        response = httpx.get(
-            url,
-            params={
-                "signature": self.api_key,
+        return self._make_request(
+            "/championships/list",
+            {
                 "types": champ_type,
                 "fromYear": from_year,
                 "toYear": to_year,
             },
         )
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return {}
 
     def get_data_championships_by_id(
-        self, champ_id: int, champ_type: TypeChampionship = TypeChampionship.GGP.title
+        self, champ_id: int, champ_type: str = TypeChampionship.GGP
     ):
-        url = f"{self.url}/championships/get"
-        response = httpx.get(
-            url,
-            params={
-                "signature": self.api_key,
-                "id": champ_id,
-                "type": champ_type,
-            },
+        return self._make_request(
+            "/championships/get",
+            {"id": champ_id, "type": champ_type},
         )
 
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return {}
-
-    def data_stage(self, stage_id: int, stage_type: str) -> {dict | None}:
+    def data_stage(self, stage_id: int, stage_type: str) -> dict:
         """Получает данные по этапам чемпионата"""
-        url = f"{self.url}/stages/get?id=&type="
-        response = httpx.get(
-            url,
-            params={
-                "signature": self.api_key,
-                "id": stage_id,
-                "type": stage_type,
-            },
-        )
-        if response.status_code == 200:
-            data = response.json()
-            return data
-        else:
-            return {}
+        return self._make_request("/stages/get", {"id": stage_id, "type": stage_type})
 
-    def get_figure_data(self, figure_id: int) -> dict | None:
+    def get_figure_data(self, figure_id: int) -> dict:
         """Получает данные по фигуре"""
-        url = f"{self.url}/figures/get"
-        response = httpx.get(url, params={"signature": self.api_key, "id": figure_id})
-        if response.status_code == 200:
-            data = response.json()
-            return data
-        else:
-            return {}
+        return self._make_request("/figures/get", {"id": figure_id})
 
-    def get_athlete_data(self, athlete_id: int) -> dict | None:
+    def get_athlete_data(self, athlete_id: int) -> dict:
         """Получает данные по спортсмену"""
-        url = f"{self.url}/users/get"
-        response = httpx.get(url, params={"signature": self.api_key, "id": athlete_id})
-
-        if response.status_code == 200:
-            data = response.json()
-            return data
-
-        return {}
+        return self._make_request("/users/get", {"id": athlete_id})
 
 
 def get_subscribers_for_class(
